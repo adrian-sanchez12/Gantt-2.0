@@ -1,0 +1,118 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
+
+body {
+  color: var(--foreground);
+  background: var(--background);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+/* 🎨 Mejoras en la tabla */
+.custom-table .p-datatable-table {
+  border-collapse: separate;
+  border-spacing: 0;
+  border: 2px solid #d1d5db; /* Bordes de la tabla más visibles */
+}
+
+.custom-table .p-datatable-thead > tr > th {
+  background-color: #f4f4f5;
+  border-bottom: 2px solid #d1d5db;
+  padding: 12px;
+  font-weight: bold;
+}
+
+.custom-table .p-datatable-tbody > tr {
+  border-bottom: 1px solid #d1d5db;
+}
+
+.custom-table .p-datatable-tbody > tr:nth-child(even) {
+  background-color: #f9fafb;
+}
+
+.custom-table .p-datatable-tbody > tr td {
+  border-right: 1px solid #e5e7eb;
+  padding: 12px;
+}
+
+.custom-table .p-datatable-tbody > tr:hover {
+  background-color: #e5e7eb;
+}
+
+.p-progressbar-value .p-progressbar-label {
+  display: none !important;
+}
+
+/* 🎨 Slanted Tabs */
+.slanted-tabview .p-tabview-nav {
+  background: white;
+  display: flex;
+  border-bottom: none;
+}
+
+.slanted-tabview .p-tabview-nav li {
+  position: relative;
+  margin-right: 10px;
+}
+
+.slanted-tabview .p-tabview-nav li .p-tabview-nav-link {
+  background: #f3f4f6;
+  border: none;
+  color: #374151;
+  font-weight: bold;
+  padding: 12px 20px;
+  position: relative;
+  transform: skewX(-15deg);
+  transition: all 0.3s ease-in-out;
+  border-radius: 8px 8px 0 0;
+}
+
+.slanted-tabview .p-tabview-nav li .p-tabview-nav-link:hover {
+  background: #e5e7eb;
+}
+
+.slanted-tabview .p-tabview-nav li.p-highlight .p-tabview-nav-link {
+  background: #2563eb;
+  color: white;
+}
+
+.slanted-tabview .p-tabview-nav li::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -10px;
+  width: 10px;
+  height: 100%;
+  background: inherit;
+  transform: skewX(15deg);
+}
+
+.slanted-tabview .p-tabview-panels {
+  border-top: 2px solid #2563eb;
+  padding: 20px;
+  background: white;
+}
+
+/* 🎨 Fade-In Effect */
+.fade-in {
+  opacity: 0;
+  animation: fadeIn 0.5s ease-in-out forwards;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+
+
