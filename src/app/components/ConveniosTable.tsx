@@ -1,10 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabase";
 import { DataTable, DataTableRowEditCompleteEvent } from "primereact/datatable";
 import { Column } from "primereact/column";
-import { Panel } from "primereact/panel";
 import { Button } from "primereact/button";
 import { InputText } from "primereact/inputtext";
 import { FilterMatchMode } from "primereact/api";
@@ -14,7 +12,9 @@ import { ProgressBar } from "primereact/progressbar";
 import { Dropdown } from "primereact/dropdown";
 import { Toast } from "primereact/toast";
 import { useRef } from "react";
-
+import ConvenioDialog from "./ConvenioDialog";
+import TimelineModal from "./TimelineModal";
+import EditarRegistroDialog from "./EditarRegistroDialog";
 
 const fases = [
   { label: "Negociación", value: "Negociación" },
@@ -27,6 +27,7 @@ const fases = [
 
 interface Convenio {
   id: number;
+  nombre: string;
   cooperante: string;
   sector: string;
   consecutivo_numerico: number;
@@ -36,6 +37,7 @@ interface Convenio {
 interface RegistroProceso {
   id: number;
   convenio_id: number;
+  entidad_proponente: string;
   autoridad_ministerial: string;
   funcionario_emisor: string;
   entidad_emisora: string;
@@ -56,33 +58,119 @@ export default function ConveniosTable() {
   const [filters, setFilters] = useState({});
   const [globalFilter, setGlobalFilter] = useState("");
 
-  const [showDialog, setShowDialog] = useState(false);
+  const [showDialogConvenio, setShowDialogConvenio] = useState(false);
   const [newRegistro, setNewRegistro] = useState<Partial<RegistroProceso>>({});
   const [selectedConvenioId, setSelectedConvenioId] = useState<number | null>(null);
+  const [showTimeline, setShowTimeline] = useState(false);
+  const [selectedRegistroProceso, setSelectedRegistroProceso] = useState<string | null>(null);
+  const [showDialog, setShowDialog] = useState(false);
+  const [showEditDialog, setShowEditDialog] = useState(false);
+  const [registroSeleccionado, setRegistroSeleccionado] = useState(null);
 
-  useEffect(() => {
-    async function fetchData() {
-      const { data: conveniosData } = await supabase.from("convenios").select("*");
-      setConvenios(conveniosData || []);
+  const [seleccionandoConvenio, setSeleccionandoConvenio] = useState(false);
+  const [selectedConvenioParaEliminar, setSelectedConvenioParaEliminar] = useState<Convenio | null>(null);
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  
+  
+  const [isMounted, setIsMounted] = useState(false);
+  
+  const [errors, setErrors] = useState({});
 
-      const { data: registroData } = await supabase.from("registro_procesos").select("*");
-      setRegistroProcesos(registroData || []);
+  const fetchData = async () => {
+    try {
+      // Obtener convenios desde la API
+      const response = await fetch("/api/convenios");
+      const data = await response.json();
+  
+      if (!data || data.error) {
+        console.error("Error obteniendo datos:", data.error);
+        return;
+      }
+  
+      // Obtener los convenios y los registros de procesos
+      const { totalConvenios, totalCooperantes, convenios } = data;
+  
+      // Obtener registros de procesos desde la API
+      const registrosRes = await fetch("/api/registro_procesos");
+      const registrosData = await registrosRes.json();
+  
+      if (!registrosData || registrosData.error) {
+        console.error("Error obteniendo registros de procesos:", registrosData.error);
+        return;
+      }
+  
+      // Definir el orden de las fases
+      const fasesOrdenadas = ["Negociación", "Visto Bueno", "Revisión Técnica", "Análisis Legal", "Verificación Legal", "Firma"];
+  
+      // Crear un mapa de convenio_id -> fase más avanzada
+      const faseMaximaPorConvenio = registrosData.reduce((acc:any, registro:any) => {
+        const currentFaseIndex = fasesOrdenadas.indexOf(registro.fase_registro);
+        if (!acc[registro.convenio_id] || currentFaseIndex > fasesOrdenadas.indexOf(acc[registro.convenio_id])) {
+          acc[registro.convenio_id] = registro.fase_registro;
+        }
+        return acc;
+      }, {} as Record<number, string>);
+  
+      // Actualizar `fase_actual` en la lista de convenios
+      const conveniosActualizados = convenios.map((convenio:any) => ({
+        ...convenio,
+        fase_actual: faseMaximaPorConvenio[convenio.id] || "Negociación", // Default a "Negociación"
+      }));
+  
+      // Actualizar estados en el frontend
+      setConvenios(conveniosActualizados);
+      setRegistroProcesos(registrosData);
+    } catch (error) {
+      console.error("Error obteniendo datos:", error);
     }
-
+  };
+  
+  useEffect(() => {
+    setIsMounted(true);
     fetchData();
-
     setFilters({
       global: { value: null, matchMode: FilterMatchMode.CONTAINS },
     });
   }, []);
 
+  if (!isMounted) {
+    return null; 
+  }
+  
+  const updateFaseActual = async (convenioId: number) => {
+    try {
+      // Obtener la última fase ingresada para este convenio
+      const response = await fetch(`/api/registro_procesos?convenioId=${convenioId}&latest=true`);
+      const lastFase = await response.json();
+  
+      if (!lastFase || !lastFase.fase_registro) return;
+  
+      // Actualizar `fase_actual` en la tabla convenios
+      await fetch("/api/convenios", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: convenioId, fase_actual: lastFase.fase_registro }),
+      });
+  
+      // Actualizar el estado en React
+      setConvenios(convenios.map(c => 
+        c.id === convenioId ? { ...c, fase_actual: lastFase.fase_registro } : c
+      ));
+    } catch (error) {
+      console.error("Error actualizando fase_actual:", error);
+    }
+  };
+  
+  
+
   const consecutivoTemplate = (rowData: Convenio) => {
     return (
-      <span className="flex justify-center items-center bg-blue-500 text-white font-bold text-sm rounded-full w-8 h-8">
-        {rowData.consecutivo_numerico}
+<span className="flex justify-center items-center bg-[#CDA95F] text-white font-bold text-sm rounded-full w-8 h-8">
+{rowData.consecutivo_numerico}
       </span>
     );
   };
+
   const faseProgreso = (rowData: Convenio) => {
     const fases = ["Negociación", "Visto Bueno", "Revisión Técnica", "Análisis Legal", "Verificación Legal", "Firma"];
     const faseIndex = fases.indexOf(rowData.fase_actual);
@@ -90,6 +178,7 @@ export default function ConveniosTable() {
   
     return <ProgressBar value={progress} className="w-32 h-3" showValue={false} />;
   };
+  
   
   const faseRegistroTemplate = (rowData: RegistroProceso) => {
     const faseColors: Record<string, string> = {
@@ -112,40 +201,8 @@ export default function ConveniosTable() {
     );
   };
   
-  
-  
-  const updateFaseActual = async (convenioId: number) => {
-    const { data: lastFase, error } = await supabase
-      .from("registro_procesos")
-      .select("fase_registro")
-      .eq("convenio_id", convenioId)
-      .order("id", { ascending: false }) // Obtener la última fase ingresada
-      .limit(1)
-      .single();
-  
-    if (error) {
-      console.error("Error obteniendo última fase:", error.message);
-      return;
-    }
-  
-    if (lastFase) {
-      const { error: updateError } = await supabase
-        .from("convenios")
-        .update({ fase_actual: lastFase.fase_registro })
-        .eq("id", convenioId);
-  
-      if (updateError) {
-        console.error("Error actualizando fase_actual:", updateError.message);
-      } else {
-        setConvenios(convenios.map(c => 
-          c.id === convenioId ? { ...c, fase_actual: lastFase.fase_registro } : c
-        ));
-      }
-    }
-  };
-
   const formatDate = (dateString: string) => {
-    if (!dateString) return ""; // Evita errores con valores nulos o vacíos
+    if (!dateString) return "";
     return new Date(dateString).toLocaleDateString("es-ES", {
       day: "2-digit",
       month: "2-digit",
@@ -153,77 +210,92 @@ export default function ConveniosTable() {
     });
   };
 
+  const abrirEditarRegistro = (registro:any) => {
+    setRegistroSeleccionado(registro);
+    setShowEditDialog(true);
+  };
+
+  const actualizarRegistroLocal = (registroActualizado: RegistroProceso) => {
+    setRegistroProcesos((prevRegistros) => {
+      const nuevosRegistros = prevRegistros.map((registro) =>
+        registro.id === registroActualizado.id ? registroActualizado : registro
+      );
+  
+      // Recalcular la fase más avanzada del convenio
+      const fasesOrdenadas = ["Negociación", "Visto Bueno", "Revisión Técnica", "Análisis Legal", "Verificación Legal", "Firma"];
+  
+      // Buscar todos los registros del convenio
+      const registrosConvenio = nuevosRegistros.filter((r) => r.convenio_id === registroActualizado.convenio_id);
+  
+      // Determinar la fase más avanzada
+      const faseMaxima = registrosConvenio.reduce((maxFase, reg) => {
+        return fasesOrdenadas.indexOf(reg.fase_registro) > fasesOrdenadas.indexOf(maxFase) ? reg.fase_registro : maxFase;
+      }, "Negociación");
+  
+      // Actualizar `fase_actual` en convenios
+      setConvenios((prevConvenios) =>
+        prevConvenios.map((c) =>
+          c.id === registroActualizado.convenio_id ? { ...c, fase_actual: faseMaxima } : c
+        )
+      );
+  
+      return nuevosRegistros;
+    });
+  };
+  
+  
   const handleAddRegistro = async () => {
-    if (!selectedConvenioId) return;
-  
-    const convenio = convenios.find((c) => c.id === selectedConvenioId);
-    if (!convenio) return;
-  
-    const { data, error } = await supabase.from("registro_procesos").insert([
-      {
-        ...newRegistro,
-        convenio_id: selectedConvenioId,
-        fase_registro: newRegistro.fase_registro, // Usa la fase seleccionada en el diálogo
-        fecha_inicio: newRegistro.fecha_inicio ? (newRegistro.fecha_inicio as Date).toISOString() : null,
-        fecha_final: newRegistro.fecha_final ? (newRegistro.fecha_final as Date).toISOString() : null,
-      },
-    ]);
-  
-    if (error) {
+    if (!selectedConvenioId) {
       toast.current?.show({
         severity: "error",
         summary: "Error",
-        detail: `No se pudo guardar el registro: ${error.message}`,
+        detail: "No se ha seleccionado un convenio.",
         life: 3000,
       });
       return;
     }
   
-    // 🔹 Obtener la última fase del convenio después de insertar el registro
-    const { data: latestFaseData, error: latestFaseError } = await supabase
-      .from("registro_procesos")
-      .select("fase_registro")
-      .eq("convenio_id", selectedConvenioId)
-      .order("id", { ascending: false }) // Obtener la última fase registrada
-      .limit(1);
+    const registroData = {
+      ...newRegistro,
+      convenio_id: selectedConvenioId,
+      fecha_inicio: newRegistro.fecha_inicio ? new Date(newRegistro.fecha_inicio).toISOString().split("T")[0] : null,
+      fecha_final: newRegistro.fecha_final ? new Date(newRegistro.fecha_final).toISOString().split("T")[0] : null,
+    };
   
-    if (latestFaseError) {
-      console.error("Error obteniendo la última fase:", latestFaseError.message);
-      return;
+    try {
+      const response = await fetch("/api/registro_procesos", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(registroData),
+      });
+  
+      if (!response.ok) throw new Error("Error al insertar registro");
+  
+      // Actualizar la fase del convenio después de insertar el nuevo registro
+      await updateFaseActual(selectedConvenioId);
+  
+      toast.current?.show({
+        severity: "success",
+        summary: "Éxito",
+        detail: "Registro guardado correctamente",
+        life: 2000,
+      });
+  
+      await fetchData(); 
+      setShowDialog(false);
+      setNewRegistro({});
+    } catch (error) {
+      toast.current?.show({
+        severity: "error",
+        summary: "Error",
+        detail: "No se pudo guardar el registro.",
+        life: 3000,
+      });
     }
-  
-    const ultimaFase = latestFaseData?.[0]?.fase_registro;
-  
-    if (ultimaFase) {
-      // 🔹 Actualizar la fase del convenio con la última fase del registro
-      const { error: updateError } = await supabase
-        .from("convenios")
-        .update({ fase_actual: ultimaFase })
-        .eq("id", selectedConvenioId);
-  
-      if (updateError) {
-        console.error("Error actualizando la fase del convenio:", updateError.message);
-        return;
-      }
-    }
-  
-    toast.current?.show({
-      severity: "success",
-      summary: "Éxito",
-      detail: "Registro guardado correctamente",
-      life: 2000, // El mensaje se oculta después de 2 segundos
-    });
-  
-    setTimeout(() => {
-      window.location.reload(); // Recargar la página después de mostrar el mensaje
-    }, 2000);
-  
-    setShowDialog(false); // Cierra el diálogo después de guardar
-    setNewRegistro({}); // Limpia los campos del formulario
   };
   
   
-  
+
   const dialogFooter = (
     <div className="flex justify-end gap-2 p-4">
       <Button
@@ -235,50 +307,83 @@ export default function ConveniosTable() {
       <Button
         label="Guardar"
         icon="pi pi-check"
-        onClick={handleAddRegistro} 
-        className="p-button-success"
+        onClick={() => {
+          handleAddRegistro();
+        }}
+        className="bg-[#172951] hover:bg-[#CDA95F] text-white font-semibold py-2 px-4 rounded-lg shadow-md transition-all duration-300 transform hover:scale-105" 
       />
     </div>
   );
-
-  const handleDeleteRegistro = async (id: number) => {
-    const { error } = await supabase.from("registro_procesos").delete().eq("id", id);
-    if (error) {
-      console.error("Error eliminando registro:", error.message);
-    } else {
-      setRegistroProcesos(registroProcesos.filter((registro) => registro.id !== id));
+  const handleDeleteConvenio = async () => {
+    if (!selectedConvenioParaEliminar) return;
+  
+    try {
+      const response = await fetch(`/api/convenios?id=${selectedConvenioParaEliminar.id}`, { method: "DELETE" });
+  
+      if (!response.ok) throw new Error("Error al eliminar el convenio");
+  
+      setConvenios(convenios.filter((convenio) => convenio.id !== selectedConvenioParaEliminar.id));
+      setShowConfirmDialog(false);
+      setSeleccionandoConvenio(false);
+      setSelectedConvenioParaEliminar(null);
+  
+      toast.current?.show({
+        severity: "success",
+        summary: "Éxito",
+        detail: "Convenio eliminado correctamente",
+        life: 3000,
+      });
+    } catch (error) {
+      toast.current?.show({
+        severity: "error",
+        summary: "Error",
+        detail: "No se pudo eliminar el convenio",
+        life: 3000,
+      });
     }
   };
+  
+  
+  
+  const activarSeleccionConvenio = () => {
+    setSeleccionandoConvenio(!seleccionandoConvenio);
+    setSelectedConvenioParaEliminar(null); 
+  };
 
+  const onRowClick = (event: { data: Convenio }) => {
+    if (!seleccionandoConvenio) return; 
   
-  const handleEditRegistro = async (e: DataTableRowEditCompleteEvent) => {
-    const updatedRegistro = {
-      ...e.newData,
-    };
-  
-    if (!updatedRegistro.id) {
-      console.error("Error: ID es necesario para editar.");
+    setSelectedConvenioParaEliminar(event.data);
+    setShowConfirmDialog(true);
+  };
+   
+  const confirmarEliminarConvenio = () => {
+    if (!selectedConvenioParaEliminar) {
+      toast.current?.show({ severity: "warn", summary: "Atención", detail: "Seleccione un convenio", life: 3000 });
       return;
     }
+    setShowConfirmDialog(true);
+  };
+
+  const onSelectionChange = (e:any) => {
+    if (!seleccionandoConvenio) return; 
   
-    const { error } = await supabase
-      .from("registro_procesos")
-      .update(updatedRegistro)
-      .eq("id", updatedRegistro.id);
+    setSelectedConvenioParaEliminar(e.value); 
+    setShowConfirmDialog(true); 
+  };
   
-    if (error) {
-      console.error("Error editando registro:", error.message);
-    } else {
-      setRegistroProcesos(
-        registroProcesos.map((r) => (r.id === updatedRegistro.id ? updatedRegistro : r))
-      );
   
-      // 🔄 Después de editar, actualizar la fase_actual del convenio
-      await updateFaseActual(updatedRegistro.convenio_id);
+  
+  const handleDeleteRegistro = async (id: number) => {
+    try {
+      const response = await fetch(`/api/registro_procesos?id=${id}`, { method: "DELETE" });
+      if (!response.ok) throw new Error("Error al eliminar el registro");
+      setRegistroProcesos(registroProcesos.filter((registro) => registro.id !== id));
+    } catch (error) {
+      console.error("Error eliminando registro:", error);
     }
   };
   
-
 
   const textEditor = (options: any) => {
     return (
@@ -300,40 +405,49 @@ export default function ConveniosTable() {
           <Button
             label="Añadir Registro"
             icon="pi pi-plus"
-            className="bg-green-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md hover:bg-green-700 transition-all duration-300 transform hover:scale-105 flex items-center gap-2"
-            onClick={() => {
+            className="bg-[#172951] hover:bg-[#CDA95F] text-white font-semibold py-2 px-4 rounded-lg shadow-md transition-all duration-300 transform hover:scale-105"             onClick={() => {
               setSelectedConvenioId(rowData.id);
               setShowDialog(true);
             }}
           />
         </div>
 
-        <DataTable
-          value={registros}
-          editMode="row"
-          dataKey="id"
-          responsiveLayout="scroll"
-          className="text-xs"
-          onRowEditComplete={handleEditRegistro}
-        >
+        <DataTable value={registros} dataKey="id" responsiveLayout="scroll" className="text-xs">
+          <Column field="entidad_proponente" header="Entidad Proponente" sortable editor={textEditor} />
           <Column field="funcionario_emisor" header="Autoridad Ministerial" sortable editor={textEditor} />
           <Column field="autoridad_ministerial" header="Funcionario Emisor" sortable editor={textEditor} />
           <Column field="entidad_emisora" header="Entidad Emisora" sortable editor={textEditor} />
           <Column field="funcionario_receptor" header="Funcionario Receptor" sortable editor={textEditor} />
           <Column field="entidad_receptora" header="Entidad Receptora"  editor={textEditor} />
-          <Column field="registro_proceso" header="Registro del Proceso" editor={textEditor} style={{ width: "250px" }} />
+          <Column 
+  field="registro_proceso" 
+  header="Registro del Proceso" 
+  body={(rowData) => (
+    <span 
+      className="text-blue-600 underline cursor-pointer hover:text-blue-800 transition"
+      onClick={() => {
+        setSelectedRegistroProceso(rowData.id); 
+        setShowTimeline(true);
+      }}
+    >
+      {rowData.registro_proceso}
+    </span>
+  )}
+  style={{ width: "250px" }} 
+/>
           <Column field="fecha_inicio" header="Fecha Inicio" editor={textEditor} body={(rowData) => formatDate(rowData.fecha_inicio)} sortable />
-          <Column field="fecha_final" header="Fecha Final" editor={textEditor} body={(rowData) => formatDate(rowData.fecha_final)} sortable />
           <Column field="tipo_convenio" header="Tipo de Convenio" editor={textEditor} />
           <Column field="fase_registro" header="Fase" body={faseRegistroTemplate} sortable />
-
           <Column
-  rowEditor
-  headerStyle={{ width: "4rem", textAlign: "center" }}
-  bodyStyle={{ textAlign: "center" }}
-/>
-          <Column
-            body={(rowData) => (
+          header="Acciones"
+          body={(rowData) => (
+            <Button
+              icon="pi pi-pencil"
+              className="p-button-rounded p-button-warning p-button-sm"
+              onClick={() => abrirEditarRegistro(rowData)}
+            />
+          )}
+        />          <Column body={(rowData) => (
               <Button icon="pi pi-trash" className="p-button-danger p-button-sm" onClick={() => handleDeleteRegistro(rowData.id)} />
             )}
             style={{ textAlign: "center", width: "50px" }}
@@ -345,39 +459,71 @@ export default function ConveniosTable() {
 
   return (
     <>
-      <Panel header="Lista de Convenios">
-        <div className="mb-4 flex items-center gap-2">
-          <i className="pi pi-search text-gray-500" />
-          <InputText
-            value={globalFilter}
-            onChange={(e) => {
-              setGlobalFilter(e.target.value);
-              setFilters({ global: { value: e.target.value, matchMode: FilterMatchMode.CONTAINS } });
-            }}
-            placeholder="Buscar"
-            className="p-inputtext-sm w-full max-w-sm border border-gray-400 rounded-md px-3 py-2 bg-white shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-300"
-          />
-        </div>
+      <div className="flex justify-between items-center mb-4">
+  {/* Buscador */}
+  <div className="flex items-center gap-2 w-full max-w-md">
+    <i className="pi pi-search text-gray-500" />
+    <InputText
+      value={globalFilter}
+      onChange={(e) => {
+        setGlobalFilter(e.target.value);
+        setFilters({ global: { value: e.target.value, matchMode: FilterMatchMode.CONTAINS } });
+      }}
+      placeholder="Buscar"
+      className="p-inputtext-sm w-full border border-gray-400 rounded-md px-3 py-2 bg-white shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-300"
+    />
+  </div>
 
-        <DataTable
-          value={convenios}
-          expandedRows={expandedRows}
-          onRowToggle={(e) => setExpandedRows(e.data)}
-          rowExpansionTemplate={rowExpansionTemplate}
-          dataKey="id"
-          paginator rows={10}
-          filters={filters}
-          globalFilterFields={["cooperante", "sector"]}
-          responsiveLayout="scroll"
-          className="custom-table"
-        >
-          <Column expander style={{ width: "5rem" }} />
-          <Column field="consecutivo_numerico" header="Consecutivo" body={consecutivoTemplate} sortable />
-          <Column field="cooperante" header="Cooperante" sortable />
-          <Column field="sector" header="Sector" sortable />
-          <Column field="fase_actual" header="Progreso" body={faseProgreso} sortable />
-          </DataTable>
-      </Panel>
+  <div className="flex justify-between items-center mb-4">
+  {/* Contenedor de botones alineados */}
+  <div className="flex gap-4 mb-4">
+  <Button 
+    label="Añadir Convenio" 
+    icon="pi pi-plus" 
+    className="bg-[#172951] hover:bg-[#CDA95F] text-white font-semibold py-2 px-4 rounded-lg shadow-md transition-all duration-300 transform hover:scale-105"
+    onClick={() => setShowDialogConvenio(true)}
+  />
+  
+  <Button 
+  label="Eliminar Convenio" 
+  icon="pi pi-trash" 
+  className="p-button-danger font-semibold py-2 px-4 rounded-lg shadow-md transition-all duration-300 transform bg-red-600 hover:bg-red-700 text-white"
+  onClick={activarSeleccionConvenio}
+/>
+
+</div>
+
+
+</div>
+
+</div>
+
+<DataTable
+  value={convenios}
+  expandedRows={expandedRows}
+  onRowToggle={(e) => setExpandedRows(e.data)}
+  rowExpansionTemplate={rowExpansionTemplate}
+  dataKey="id"
+  paginator
+  rows={5}
+  filters={filters}
+  globalFilterFields={["nombre", "cooperante", "sector", "consecutivo_numerico"]}
+  responsiveLayout="scroll"
+  className={`custom-table ${seleccionandoConvenio ? "cursor-pointer" : ""}`}
+  selectionMode={seleccionandoConvenio ? "single" : undefined} 
+  selection={selectedConvenioParaEliminar}
+  onSelectionChange={onSelectionChange} 
+>
+  {seleccionandoConvenio && <Column selectionMode="single" headerStyle={{ width: "3rem" }} className="p-selection-column"/>}
+  <Column expander style={{ width: "5rem" }} />
+  <Column field="consecutivo_numerico" header="Registro" body={consecutivoTemplate} sortable />
+  <Column field="nombre" header="Nombre" sortable />
+  <Column field="cooperante" header="Cooperante" sortable />
+  <Column field="sector" header="Sector" sortable />
+  <Column field="fase_actual" header="Progreso" body={faseProgreso} sortable />
+</DataTable>
+
+
       <Dialog
   header="Añadir Registro"
   visible={showDialog}
@@ -387,16 +533,35 @@ export default function ConveniosTable() {
   className="p-dialog-custom"
 >
   <div className="grid grid-cols-2 gap-4 p-6">
-    
-    {/* Autoridad Ministerial */}
-    <div className="flex flex-col">
-      <label className="font-semibold text-gray-600 mb-1">Autoridad Ministerial</label>
+
+     {/* Entidad proponente */}
+     <div className="flex flex-col">
+      <label className="font-semibold text-gray-600 mb-1">Entidad proponente</label>
       <InputText 
         className="p-inputtext-sm p-2 border border-gray-300 rounded-lg"
-        placeholder="Autoridad Ministerial" 
-        onChange={(e) => setNewRegistro({ ...newRegistro, autoridad_ministerial: e.target.value })} 
+        placeholder="Entidad proponente" 
+        onChange={(e) => setNewRegistro({ ...newRegistro, entidad_proponente: e.target.value })} 
       />
     </div>
+    
+  {/* Autoridad Ministerial */}
+  <div className="flex flex-col">
+  <label className="font-semibold text-gray-600 mb-1">Autoridad Ministerial</label>
+  <Dropdown
+    className="p-inputtext-sm p-2 border border-gray-300 rounded-lg"
+    value={newRegistro.autoridad_ministerial}
+    options={[
+      { label: "Ministro de Educación Pública", value: "Ministro de Educación Pública" },
+      { label: "Viceministerio Académico de Educación Pública", value: "Viceministerio Académico de Educación Pública" },
+      { label: "Viceministerio Administrativo de Educación Pública", value: "Viceministerio Administrativo de Educación Pública" },
+      { label: "Viceministerio de Planificación y Coordinación Regional", value: "Viceministerio de Planificación y Coordinación Regional" },
+    ]}
+    placeholder="Seleccione la Autoridad Ministerial"
+    onChange={(e) => setNewRegistro({ ...newRegistro, autoridad_ministerial: e.value })}
+  />
+
+</div>
+
 
     {/* Funcionario Emisor */}
     <div className="flex flex-col">
@@ -438,15 +603,17 @@ export default function ConveniosTable() {
       />
     </div>
 
-    {/* Tipo de Convenio */}
-    <div className="flex flex-col">
-      <label className="font-semibold text-gray-600 mb-1">Tipo de Convenio</label>
-      <InputText 
-        className="p-inputtext-sm p-2 border border-gray-300 rounded-lg"
-        placeholder="Tipo de Convenio" 
-        onChange={(e) => setNewRegistro({ ...newRegistro, tipo_convenio: e.target.value })} 
-      />
-    </div>
+{/* Tipo de Convenio */}
+<div className="flex flex-col">
+  <label className="font-semibold text-gray-600 mb-1">Tipo de Convenio</label>
+  <Dropdown 
+    className="p-inputtext-sm p-2 border border-gray-300 rounded-lg appearance-none"
+    value={newRegistro.tipo_convenio} 
+    options={[{ label: "Marco", value: "Marco" }, { label: "Específico", value: "Específico" }, { label: "Adenda", value: "Adenda" }]}
+    placeholder="Seleccione el Tipo de Convenio"
+    onChange={(e) => setNewRegistro({ ...newRegistro, tipo_convenio: e.value })}
+  />
+</div>
 
     {/* Fecha Inicio */}
     <div className="flex flex-col">
@@ -455,30 +622,25 @@ export default function ConveniosTable() {
         className="p-inputtext-sm border border-gray-300 rounded-lg p-2"
         placeholder="Seleccionar fecha"
         showIcon
-        onChange={(e) => setNewRegistro({ ...newRegistro, fecha_inicio: e.value as Date })} 
-      />
+        onChange={(e) => 
+          setNewRegistro({ 
+            ...newRegistro, 
+            fecha_inicio: e.value ? new Date(e.value).toISOString().split("T")[0] : "" 
+          }) 
+        }
+              />
     </div>
 
-    {/* Fecha Final */}
-    <div className="flex flex-col">
-      <label className="font-semibold text-gray-600 mb-1">Fecha Final</label>
-      <Calendar 
-        className="p-inputtext-sm border border-gray-300 rounded-lg p-2"
-        placeholder="Seleccionar fecha"
-        showIcon
-        onChange={(e) => setNewRegistro({ ...newRegistro, fecha_final: e.value as Date })} 
-      />
-    </div>
-
-    {/* Registro del Proceso */}
-    <div className="flex flex-col col-span-2">
-      <label className="font-semibold text-gray-600 mb-1">Registro del Proceso</label>
-      <textarea 
-        className="p-inputtext-sm p-2 border border-gray-300 rounded-lg resize-none h-20"
-        placeholder="Escribe el detalle del proceso"
-        onChange={(e) => setNewRegistro({ ...newRegistro, registro_proceso: e.target.value })}
-      />
-    </div>
+{/* Registro del Proceso */}
+<div className="flex flex-col col-span-2">
+  <label className="font-semibold text-gray-600 mb-1">Registro del Proceso</label>
+  <textarea
+    className="p-inputtext-sm w-full border border-gray-300 rounded-lg p-2 bg-white resize-y focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+    placeholder="Ingrese detalles del proceso"
+    value={newRegistro.registro_proceso || ""}
+    onChange={(e) => setNewRegistro({ ...newRegistro, registro_proceso: e.target.value })} 
+  />
+</div>
 
     {/* Selección de Fase del Registro */}
     <div className="flex flex-col col-span-2">
@@ -493,6 +655,41 @@ export default function ConveniosTable() {
     </div>
   </div>
 </Dialog>
+
+<Dialog
+  visible={showConfirmDialog}
+  style={{ width: "450px" }}
+  header="Confirmar Eliminación"
+  modal
+  footer={
+    <div className="flex justify-end gap-2">
+      <Button label="Cancelar" icon="pi pi-times" onClick={() => setShowConfirmDialog(false)} className="p-button-text" />
+      <Button label="Eliminar" icon="pi pi-check" className="p-button-danger" onClick={handleDeleteConvenio} />
+    </div>
+  }
+  onHide={() => setShowConfirmDialog(false)}
+>
+  {selectedConvenioParaEliminar && (
+    <div>
+      <p className="text-gray-700">¿Seguro que quieres eliminar este convenio?</p>
+      <p className="font-semibold text-red-600">{selectedConvenioParaEliminar.nombre}</p>
+    </div>
+  )}
+</Dialog>
+
+
+<TimelineModal 
+  visible={showTimeline} 
+  onHide={() => setShowTimeline(false)} 
+  registroProcesoId={selectedRegistroProceso ? Number(selectedRegistroProceso) : null}
+/>
+<ConvenioDialog visible={showDialogConvenio} onHide={() => setShowDialogConvenio(false)} onRefresh={fetchData} />
+<EditarRegistroDialog
+  visible={showEditDialog}
+  onHide={() => setShowEditDialog(false)}
+  registro={registroSeleccionado}
+  onSave={actualizarRegistroLocal}
+/>
 
     </>
   );

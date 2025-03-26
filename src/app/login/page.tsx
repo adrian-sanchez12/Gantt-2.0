@@ -19,7 +19,6 @@ export default function Login() {
     e.preventDefault();
     setLoading(true);
 
-    // Verifica que el email sea del dominio "mep.go.cr"
     if (!email.endsWith("@mep.go.cr")) {
       toast.current?.show({
         severity: "warn",
@@ -31,7 +30,6 @@ export default function Login() {
       return;
     }
 
-    // Verifica en la base de datos
     const { data, error } = await supabase
       .from("usuarios")
       .select("id, email")
@@ -49,7 +47,6 @@ export default function Login() {
       return;
     }
 
-    // Si el usuario existe, guarda la sesión y redirige
     localStorage.setItem("isAuthenticated", "true");
     router.push("/dashboard");
   };

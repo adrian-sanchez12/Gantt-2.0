@@ -14,11 +14,10 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
-/* 🎨 Mejoras en la tabla */
 .custom-table .p-datatable-table {
   border-collapse: separate;
   border-spacing: 0;
-  border: 2px solid #d1d5db; /* Bordes de la tabla más visibles */
+  border: 2px solid #d1d5db; 
 }
 
 .custom-table .p-datatable-thead > tr > th {
@@ -49,7 +48,6 @@ body {
   display: none !important;
 }
 
-/* 🎨 Slanted Tabs */
 .slanted-tabview .p-tabview-nav {
   background: white;
   display: flex;
@@ -99,7 +97,6 @@ body {
   background: white;
 }
 
-/* 🎨 Fade-In Effect */
 .fade-in {
   opacity: 0;
   animation: fadeIn 0.5s ease-in-out forwards;
@@ -113,6 +110,44 @@ body {
     opacity: 1;
   }
 }
+/* Estilos para las pestañas con efecto hover azul */
+.slanted-tabview .p-tabview-nav li .p-tabview-nav-link {
+  background: #f3f4f6;
+  border: none;
+  color: #374151;
+  font-weight: bold;
+  padding: 12px 20px;
+  position: relative;
+  transform: skewX(-15deg);
+  transition: all 0.3s ease-in-out;
+  border-radius: 8px 8px 0 0;
+}
+
+/* Efecto hover: cambia el fondo a azul */
+.slanted-tabview .p-tabview-nav li .p-tabview-nav-link:hover {
+  background: #172951 !important; /* Azul */
+  color: white !important;
+}
+
+.slanted-tabview .p-tabview-nav li.p-highlight .p-tabview-nav-link {
+  background: #172951 !important;
+  color: white !important;
+}
+
+@font-face {
+  font-family: "Henderson";
+  src: url("/fonts/Henderson_Sans_Basic_Light.otf") format("opentype");
+  font-weight: normal;
+  font-style: normal;
+}
+
+body {
+  font-family: "Henderson" !important;
+  font-size: small;
+}
+
+
+
 
 
 

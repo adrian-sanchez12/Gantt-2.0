@@ -6,7 +6,6 @@ import { motion } from "framer-motion";
 import { FaBook, FaFileAlt, FaClipboardList, FaCalendarAlt, FaHandshake } from "react-icons/fa";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabase"; 
 
 export default function Home() {
   const [totalConvenios, setTotalConvenios] = useState(0);
@@ -14,28 +13,19 @@ export default function Home() {
 
   useEffect(() => {
     async function fetchData() {
-      // Obtener el total de convenios firmados
-      const { data: convenios, error: conveniosError } = await supabase
-        .from("convenios")
-        .select("*");
-
-      if (!conveniosError) {
-        setTotalConvenios(convenios.length);
-      }
-
-      // Obtener el total de cooperantes
-      const { data: cooperantes, error: cooperantesError } = await supabase
-        .from("convenios")
-        .select("cooperante");
-
-      if (!cooperantesError) {
-        const uniqueCooperantes = new Set(cooperantes.map((item) => item.cooperante));
-        setTotalCooperantes(uniqueCooperantes.size);
+      try {
+        const response = await fetch("/api/convenios");
+        const data = await response.json();
+        
+        setTotalConvenios(data.totalConvenios);
+        setTotalCooperantes(data.totalCooperantes);
+      } catch (error) {
+        console.error("Error obteniendo datos:", error);
       }
     }
-
+  
     fetchData();
-  }, []);
+  }, []);  
 
   return (
     <main className="p-6 bg-gray-50 min-h-screen">
@@ -45,15 +35,15 @@ export default function Home() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
       >
-        {/* 📌 Columna Izquierda (Bienvenida + Fases) */}
+        {/* Columna Izquierda */}
         <div className="md:col-span-2 space-y-6">
           {/* Sección de Bienvenida */}
           <motion.section
-            className="bg-white shadow-lg rounded-xl p-6 border-l-4 border-blue-500"
+            className="bg-white shadow-lg rounded-xl p-6 border-l-4 border-[#CDA95F]"
             whileHover={{ scale: 1.02 }}
           >
-            <h1 className="text-3xl font-bold text-blue-700 mb-4 flex items-center">
-              <FaClipboardList className="mr-3 text-blue-500" /> Bienvenido a Gantt 2.0
+            <h1 className="text-3xl font-bold text-[#172951] mb-4 flex items-center">
+              <FaClipboardList className="mr-3 text-[#CDA95F]" /> Bienvenido a Gantt 2.0
             </h1>
             <p className="text-gray-700">
               Gantt 2.0 es una herramienta de gestión de convenios de cooperación que permite realizar un seguimiento estructurado
@@ -63,11 +53,11 @@ export default function Home() {
 
           {/* Sección de Fases del Macroproceso */}
           <motion.section
-            className="bg-white shadow-lg rounded-xl p-6 border-l-4 border-green-500"
+            className="bg-white shadow-lg rounded-xl p-6 border-l-4 border-[#CDA95F]"
             whileHover={{ scale: 1.02 }}
           >
-            <h2 className="text-2xl font-semibold mb-4 flex items-center">
-              <FaFileAlt className="mr-3 text-green-500" /> GANTT 2025 - Fases del Macroproceso de Convenios
+            <h2 className="text-2xl font-semibold text-[#172951] mb-4 flex items-center">
+              <FaFileAlt className="mr-3 text-[#CDA95F]" /> GANTT 2025 - Fases del Macroproceso de Convenios
             </h2>
             <Accordion>
               <AccordionTab header="FASE 1. Negociación y gestiones iniciales">
@@ -109,13 +99,13 @@ export default function Home() {
           </motion.section>
         </div>
 
-        {/* 📌 Columna Derecha (Documentación) */}
+        {/* Columna Derecha (Documentación) */}
         <motion.div
-          className="bg-white shadow-lg rounded-xl p-6 border-l-4 border-yellow-500"
+          className="bg-white shadow-lg rounded-xl p-6 border-l-4 border-[#CDA95F]"
           whileHover={{ scale: 1.02 }}
         >
-          <h2 className="text-2xl font-semibold mb-4 flex items-center">
-            <FaBook className="mr-3 text-yellow-500" /> Documentación
+          <h2 className="text-2xl font-semibold text-[#172951] mb-4 flex items-center">
+            <FaBook className="mr-3 text-[#CDA95F]" /> Documentación
           </h2>
           <p className="text-gray-700">
             Encuentra aquí la documentación detallada sobre cómo usar Gantt 2.0 y gestionar tus convenios de manera eficiente.
@@ -130,22 +120,18 @@ export default function Home() {
         </motion.div>
       </motion.div>
 
-      {/* 📊 Sección de Contadores */}
+      {/* Sección de Contadores */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
-        {/* Tarjeta de convenios firmados */}
-        <motion.div className="bg-white shadow-lg rounded-xl p-6 flex flex-col items-center border border-gray-300">
-          <h3 className="text-gray-700 text-lg font-semibold mb-2">Total de Convenios Firmados</h3>
-          <span className="text-4xl font-bold text-blue-600">{totalConvenios}</span>
-          <FaCalendarAlt className="text-blue-500 text-5xl mt-3" />
-          <p className="text-gray-500 mt-2">Bitácora de convenios en trámite (Gantt)</p>
+        <motion.div className="bg-white shadow-lg rounded-xl p-6 flex flex-col items-center border border-[#CDA95F]">
+          <h3 className="text-[#CDA95F] text-lg font-semibold mb-2">Total de Convenios</h3>
+          <span className="text-4xl font-bold text-[#172951]">{totalConvenios}</span>
+          <FaCalendarAlt className="text-[#172951] text-5xl mt-3" />
         </motion.div>
 
-        {/* Tarjeta de cooperantes */}
-        <motion.div className="bg-white shadow-lg rounded-xl p-6 flex flex-col items-center border border-gray-300">
-          <h3 className="text-gray-700 text-lg font-semibold mb-2">Total de Cooperantes</h3>
-          <span className="text-4xl font-bold text-green-600">{totalCooperantes}</span>
-          <FaHandshake className="text-green-500 text-5xl mt-3" />
-          <p className="text-gray-500 mt-2">Fichas de Cooperantes</p>
+        <motion.div className="bg-white shadow-lg rounded-xl p-6 flex flex-col items-center border border-[#CDA95F]">
+          <h3 className="text-[#CDA95F] text-lg font-semibold mb-2">Total de Cooperantes</h3>
+          <span className="text-4xl font-bold text-[#172951]">{totalCooperantes}</span>
+          <FaHandshake className="text-[#172951] text-5xl mt-3" />
         </motion.div>
       </div>
     </main>

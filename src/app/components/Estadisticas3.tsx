@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
-import { supabase } from "@/lib/supabase";
 import { DataSet } from "vis-data";
 import { Timeline } from "vis-timeline/standalone";
 
@@ -12,51 +11,32 @@ export default function Estadistica3() {
 
   useEffect(() => {
     async function fetchData() {
-      const { data, error } = await supabase
-        .from("convenios")
-        .select("id, cooperante, fecha_inicio, fecha_final, fase_actual");
+      try {
+        const response = await fetch("/api/convenios");
+        const data = await response.json();
 
-      if (error) {
-        console.error("Error obteniendo convenios:", error.message);
-        return;
+        if (data.error) {
+          console.error("Error obteniendo convenios:", data.error);
+          return;
+        }
+
+        // Convertir fechas correctamente
+        const uniqueConvenios = data.convenios
+          .map((item: any) => ({
+            ...item,
+            fecha_inicio: item.fecha_inicio ? new Date(item.fecha_inicio) : null,
+            fecha_final: item.fecha_final ? new Date(item.fecha_final) : null,
+          }))
+          .filter((item: any) => item.fecha_inicio && item.fecha_final); // Filtrar fechas inválidas
+
+        setConvenios(uniqueConvenios);
+      } catch (error) {
+        console.error("Error obteniendo convenios:", error);
       }
-
-      // Eliminar duplicados
-      const uniqueConvenios = Array.from(new Map(data.map(item => [item.id, item])).values());
-      setConvenios(uniqueConvenios);
     }
 
-    if (convenios.length === 0) { // Evitar carga doble
-      fetchData();
-    }
+    fetchData();
   }, []);
-
-  useEffect(() => {
-    if (convenios.length === 0 || !timelineRef.current) return;
-
-    // Limpiar cualquier instancia previa del Timeline antes de inicializarlo
-    if (timelineInstance.current) {
-      timelineInstance.current.destroy();
-    }
-
-    const items = new DataSet(
-      convenios.map((convenio) => ({
-        id: convenio.id,
-        content: `<strong>${convenio.cooperante}</strong>`,
-        start: convenio.fecha_inicio,
-        end: convenio.fecha_final,
-        className: getPhaseColor(convenio.fase_actual),
-      }))
-    );
-
-    timelineInstance.current = new Timeline(timelineRef.current, items, {
-      stack: true,
-      showCurrentTime: true,
-      zoomMin: 1000 * 60 * 60 * 24 * 7, // Mínimo zoom de una semana
-      zoomMax: 1000 * 60 * 60 * 24 * 365, // Máximo zoom de un año
-      editable: false,
-    });
-  }, [convenios]);
 
   function getPhaseColor(fase: string) {
     const faseColors: Record<string, string> = {
@@ -70,13 +50,42 @@ export default function Estadistica3() {
     return faseColors[fase] || "bg-gray-400"; // Color gris si no hay fase
   }
 
+  useEffect(() => {
+    if (!timelineRef.current || convenios.length === 0) return;
+
+    // 🛑 Eliminar instancia previa de Timeline si existe
+    if (timelineInstance.current) {
+      timelineInstance.current.destroy();
+    }
+
+    // Crear una nueva instancia de Timeline solo si hay datos válidos
+    const items = new DataSet(
+      convenios.map((convenio) => ({
+        id: convenio.id,
+        content: `<strong>${convenio.cooperante}</strong>`,
+        start: convenio.fecha_inicio?.toISOString(), // Convertir a formato ISO
+        end: convenio.fecha_final?.toISOString(), // Convertir a formato ISO
+        className: getPhaseColor(convenio.fase_actual),
+      }))
+    );
+
+    timelineInstance.current = new Timeline(timelineRef.current, items, {
+      stack: true,
+      showCurrentTime: true,
+      zoomMin: 1000 * 60 * 60 * 24 * 7, 
+      zoomMax: 1000 * 60 * 60 * 24 * 365, 
+      editable: false,
+    });
+  }, [convenios]);
+
   return (
     <div className="p-6 bg-white shadow-lg rounded-lg">
       <h1 className="text-2xl font-bold text-gray-700 mb-4">📊 Diagrama Gantt - Progresión de Convenios</h1>
 
-      <div ref={timelineRef} className="w-full h-96 border border-gray-300 rounded-lg"></div>
+      {/*  Asegurar que el contenedor del Timeline tenga tamaño definido */}
+      <div ref={timelineRef} className="w-full h-[500px] border border-gray-300 rounded-lg"></div>
 
-      {/* 📌 Leyenda de Fases */}
+      {/*  Leyenda de Fases */}
       <div className="mt-6 flex flex-wrap gap-4">
         {Object.entries({
           "Negociación": "bg-blue-400",

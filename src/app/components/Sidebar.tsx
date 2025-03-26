@@ -16,7 +16,7 @@ export default function Sidebar() {
       showCloseIcon={false} // 🔹 Quita el botón de cierre de arriba
       className="w-64 h-screen bg-white text-gray-900 border-r shadow-lg p-4 transition-transform duration-300"
     >
-      {/* 📌 Imagen favicon centrada */}
+      {/*  Imagen favicon centrada */}
       <div className="flex justify-center mb-4">
         <Image
           src="/favicon.png" 
@@ -27,7 +27,7 @@ export default function Sidebar() {
         />
       </div>
 
-      {/* 📌 Título del Sidebar */}
+      {/*  Título del Sidebar */}
       <h2 className="text-lg font-bold text-gray-800 mb-6 text-center">Menú Principal</h2>
 
       <ul className="space-y-4">
@@ -36,22 +36,9 @@ export default function Sidebar() {
           <Button
             label="Inicio"
             icon="pi pi-home"
-            className="w-full flex items-center justify-start bg-gray-100 text-gray-700 hover:bg-blue-500 hover:text-white transition-all duration-300 p-3 rounded-lg"
+            className="w-full flex items-center justify-start bg-gray-100 text-gray-700 hover:bg-[#CDA95F] hover:text-white transition-all duration-300 p-3 rounded-lg"
             onClick={() => {
               router.push("/");
-              setSidebarVisible(false);
-            }}
-          />
-        </li>
-
-        {/* Botón para Ingresar Convenio */}
-        <li>
-          <Button
-            label="Ingresar Convenio"
-            icon="pi pi-plus"
-            className="w-full flex items-center justify-start bg-gray-100 text-gray-700 hover:bg-green-500 hover:text-white transition-all duration-300 p-3 rounded-lg"
-            onClick={() => {
-              router.push("/ingresarconvenio");
               setSidebarVisible(false);
             }}
           />
@@ -62,9 +49,21 @@ export default function Sidebar() {
           <Button
             label="Ver Convenios"
             icon="pi pi-list"
-            className="w-full flex items-center justify-start bg-gray-100 text-gray-700 hover:bg-yellow-500 hover:text-white transition-all duration-300 p-3 rounded-lg"
+            className="w-full flex items-center justify-start bg-gray-100 text-gray-700 hover:bg-[#CDA95F] hover:text-white transition-all duration-300 p-3 rounded-lg"
             onClick={() => {
               router.push("/convenios");
+              setSidebarVisible(false);
+            }}
+          />
+        </li>
+
+        <li>
+          <Button
+            label="Inventario"
+            icon="pi pi-folder"
+            className="w-full flex items-center justify-start bg-gray-100 text-gray-700 hover:bg-[#CDA95F] hover:text-white transition-all duration-300 p-3 rounded-lg"
+            onClick={() => {
+              router.push("/inventario");
               setSidebarVisible(false);
             }}
           />
@@ -75,7 +74,7 @@ export default function Sidebar() {
           <Button
             label="Ver Estadísticas"
             icon="pi pi-chart-bar"
-            className="w-full flex items-center justify-start bg-gray-100 text-gray-700 hover:bg-purple-500 hover:text-white transition-all duration-300 p-3 rounded-lg"
+            className="w-full flex items-center justify-start bg-gray-100 text-gray-700 hover:bg-[#CDA95F] hover:text-white transition-all duration-300 p-3 rounded-lg"
             onClick={() => {
               router.push("/estadistica");
               setSidebarVisible(false);
@@ -84,15 +83,7 @@ export default function Sidebar() {
         </li>
       </ul>
 
-      {/* 📌 Botón para Cerrar Sidebar (Solo queda este) */}
-      <div className="absolute bottom-6 left-4 right-4">
-        <Button
-          label="Cerrar Menú"
-          icon="pi pi-times"
-          className="w-full flex items-center justify-center bg-red-500 text-white hover:bg-red-600 transition-all duration-300 p-3 rounded-lg"
-          onClick={() => setSidebarVisible(false)}
-        />
-      </div>
+     
     </PrimeSidebar>
   );
 }

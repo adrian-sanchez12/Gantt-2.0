@@ -1,6 +1,5 @@
 "use client";
 import { useRouter } from "next/navigation";
-import { InputText } from "primereact/inputtext";
 import { Button } from "primereact/button";
 import { useSidebar } from "../context/SidebarContext";
 import Image from "next/image";
@@ -13,54 +12,46 @@ export default function Header() {
   const menuRef = useRef<Menu>(null);
 
   const handleLogout = () => {
-    localStorage.removeItem("isAuthenticated"); // Eliminar sesión
-    router.push("/login"); // Redirigir al login
+    localStorage.removeItem("isAuthenticated"); 
+    router.push("/login"); 
   };
 
   return (
-    <header className="flex justify-between items-center p-4 bg-white border-b">
+    <header className="flex justify-between items-center py-2 px-4 bg-[#172951] border-b">
       {/* Sección Izquierda: Botón de menú y Logo */}
-      <div className="flex items-center space-x-4">
+      <div className="flex items-center space-x-2">
         <Button
           icon="pi pi-bars"
-          className="p-button-text"
+          className="p-button-text text-white text-xl"
           onClick={() => setSidebarVisible(true)}
         />
         
-        {/* Logo MEP */}
+        {/* Logo MEP más grande y movido a la izquierda */}
         <Image 
-          src="/logo_mep.png" 
+          src="/Logo_mep-DORADO.png" 
           alt="Ministerio de Educación Pública"
-          width={210}  
-          height={50}
+          width={280}  
+          height={70}
           priority
         />
       </div>
 
-      {/* Sección Derecha: Barra de Búsqueda y Usuario */}
-      <div className="flex items-center space-x-4">
-        <i className="pi pi-search" />
-        <span className="p-input-icon-left">
-          <InputText placeholder="Search..." className="p-inputtext-sm" />
-        </span>
-
-        {/* Icono de Usuario con Menú */}
-        <div className="relative">
-          <Button 
-            icon="pi pi-user" 
-            className="p-button-text hover:text-blue-600 transition-all duration-300"
-            onClick={(e) => menuRef.current?.toggle(e)}
-          />
-          <Menu 
-            model={[
-              { label: "Perfil", icon: "pi pi-user" },
-              { separator: true },
-              { label: "Cerrar Sesión", icon: "pi pi-sign-out", command: handleLogout },
-            ]}
-            popup 
-            ref={menuRef} 
-          />
-        </div>
+      {/* Sección Derecha: Icono de Usuario con Menú */}
+      <div className="relative">
+        <Button 
+          icon="pi pi-user" 
+          className="p-button-text text-white text-xl hover:text-blue-300 transition-all duration-300"
+          onClick={(e) => menuRef.current?.toggle(e)}
+        />
+        <Menu 
+          model={[
+            { label: "Perfil", icon: "pi pi-user" },
+            { separator: true },
+            { label: "Cerrar Sesión", icon: "pi pi-sign-out", command: handleLogout },
+          ]}
+          popup 
+          ref={menuRef} 
+        />
       </div>
     </header>
   );
