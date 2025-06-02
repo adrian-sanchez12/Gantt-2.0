@@ -6,6 +6,7 @@ import { InputText } from "primereact/inputtext";
 import { Dropdown } from "primereact/dropdown";
 import { Button } from "primereact/button";
 import { Toast } from "primereact/toast";
+import { API_BASE } from "@/utils/api";
 
 interface ConvenioDialogProps {
   visible: boolean;  
@@ -60,7 +61,7 @@ export default function ConvenioDialog({ visible, onHide, onRefresh }: ConvenioD
 
     try {
       if (!consecutivo) {
-        const response = await fetch("/api/convenios/max-consecutivo");
+        const response = await fetch(`${API_BASE}convenios/max-consecutivo`);
         const data = await response.json();
         if (data.error) throw new Error(data.error);
 
@@ -68,7 +69,7 @@ export default function ConvenioDialog({ visible, onHide, onRefresh }: ConvenioD
       }
 
       // Validar si el consecutivo ya existe
-      const checkResponse = await fetch(`/api/convenios/check-consecutivo?consecutivo=${consecutivo}`);
+      const checkResponse = await fetch(`${API_BASE}convenios/check-consecutivo?consecutivo=${consecutivo}`);
       const checkData = await checkResponse.json();
       if (checkData.exists) {
         toast.current?.show({
@@ -80,20 +81,22 @@ export default function ConvenioDialog({ visible, onHide, onRefresh }: ConvenioD
         return;
       }
 
-      // Insertar convenio
-      const insertResponse = await fetch("/api/convenios", {
+      const payload = {
+        cooperante: formData.cooperante,
+        nombre: formData.nombre,
+        sector: formData.sector === "Otro" ? formData.otroSector : formData.sector,
+        fase_actual: formData.fase_actual,
+        firmado: false,
+        consecutivo_numerico: consecutivo,
+      };
+      
+      
+      const insertResponse = await fetch(`${API_BASE}convenios/`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          cooperante: formData.cooperante,
-          nombre: formData.nombre,
-          sector: formData.sector === "Otro" ? formData.otroSector : formData.sector,
-          fase_actual: formData.fase_actual,
-          firmado: false,
-          consecutivo_numerico: consecutivo,
-        }),
+        body: JSON.stringify(payload),
       });
-
+            
       if (!insertResponse.ok) throw new Error("Error al guardar el convenio");
 
       toast.current?.show({

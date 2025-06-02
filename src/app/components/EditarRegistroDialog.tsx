@@ -7,6 +7,7 @@ import { Dropdown } from "primereact/dropdown";
 import { Calendar } from "primereact/calendar";
 import { Button } from "primereact/button";
 import { Toast } from "primereact/toast";
+import { API_BASE } from "@/utils/api";
 
 const fases = [
   { label: "Negociación", value: "Negociación" },
@@ -60,7 +61,7 @@ interface EditarRegistroDialogProps {
 
   const handleSubmit = async () => {
     try {  
-      const response = await fetch(`/api/registro_procesos`, {
+      const response = await fetch(`${API_BASE}registro_procesos/`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

@@ -1,14 +1,16 @@
-"use client"; 
+"use client";
 
+import Sidebar from "../components/Sidebar";
+import Header from "../components/Header";
+import { SidebarProvider } from "../context/SidebarContext";
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import Sidebar from "./components/Sidebar";
-import Header from "./components/Header";
-import { SidebarProvider } from "./context/SidebarContext";
+import { usePathname, useRouter } from "next/navigation";
 import { ProgressSpinner } from "primereact/progressspinner";
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+export default function AuthLayout({ children }: { children: React.ReactNode }) {
+  const [loading, setLoading] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const pathname = usePathname();
   const router = useRouter();
 
   useEffect(() => {
@@ -18,9 +20,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     } else {
       setIsAuthenticated(true);
     }
-  }, [router]); 
-  
-  if (isAuthenticated === null) {
+    setLoading(false);
+  }, [router]);
+
+  if (loading) {
     return (
       <div className="flex justify-center items-center h-screen bg-gray-100">
         <ProgressSpinner />
@@ -28,12 +31,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     );
   }
 
+  if (!isAuthenticated) return null;
+
   return (
     <SidebarProvider>
-      {/* Barra lateral */}
       <Sidebar />
-
-      {/* Contenido principal */}
       <div className="flex-1 flex flex-col">
         <Header />
         <main className="p-6">{children}</main>

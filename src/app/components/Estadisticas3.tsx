@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef } from "react";
 import { DataSet } from "vis-data";
 import { Timeline } from "vis-timeline/standalone";
+import { API_BASE } from "@/utils/api";
 
 export default function Estadistica3() {
   const [convenios, setConvenios] = useState<any[]>([]);
@@ -12,7 +13,7 @@ export default function Estadistica3() {
   useEffect(() => {
     async function fetchData() {
       try {
-        const response = await fetch("/api/convenios");
+        const response = await fetch(`${API_BASE}convenios`);
         const data = await response.json();
 
         if (data.error) {

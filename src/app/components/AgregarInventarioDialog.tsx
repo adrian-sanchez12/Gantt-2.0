@@ -6,6 +6,7 @@ import { InputTextarea } from "primereact/inputtextarea";
 import { Calendar } from "primereact/calendar";
 import { Button } from "primereact/button";
 import { useState } from "react";
+import { API_BASE } from "@/utils/api";
 
 interface AgregarInventarioDialogProps {
   visible: boolean;
@@ -47,7 +48,7 @@ export default function AgregarInventarioDialog({
         fecha_vencimiento: formatDate(formData.fecha_vencimiento),
       };
 
-      const response = await fetch("/api/inventario", {
+      const response = await fetch(`${API_BASE}inventario/`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
@@ -89,104 +90,118 @@ export default function AgregarInventarioDialog({
       }
     >
       <div className="grid grid-cols-2 gap-6 text-sm mt-2">
-        <div className="col-span-2">
-          <label className="font-semibold">Nombre del Convenio</label>
-          <InputText
-            value={formData.nombre_convenio}
-            onChange={(e) => handleChange("nombre_convenio", e.target.value)}
-            className="w-full border border-gray-400 rounded-md p-2 bg-white"
-          />
-        </div>
 
-        <div className="col-span-2">
-          <label className="font-semibold">Objeto del Convenio</label>
-          <InputTextarea
-            value={formData.objeto_convenio}
-            onChange={(e) => handleChange("objeto_convenio", e.target.value)}
-            rows={3}
-            className="w-full border border-gray-400 rounded-md p-2 bg-white"
-          />
-        </div>
+      <div>
+    <label className="font-semibold">Cooperante</label>
+    <InputText
+      value={formData.cooperante}
+      placeholder="Nombre del cooperante"
+      onChange={(e) => handleChange("cooperante", e.target.value)}
+      className="w-full border border-gray-400 rounded-md p-2 bg-white"
+    />
+  </div>
 
-        <div>
-          <label className="font-semibold">Tipo de Instrumento</label>
-          <InputText
-            value={formData.tipo_instrumento}
-            onChange={(e) => handleChange("tipo_instrumento", e.target.value)}
-            className="w-full border border-gray-400 rounded-md p-2 bg-white"
-          />
-        </div>
+  <div>
+    <label className="font-semibold">Contraparte Externa</label>
+    <InputText
+      value={formData.contraparte_externa}
+      placeholder="Nombre de la contraparte externa"
+      onChange={(e) => handleChange("contraparte_externa", e.target.value)}
+      className="w-full border border-gray-400 rounded-md p-2 bg-white"
+    />
+  </div>
+  <div className="col-span-2">
+    <label className="font-semibold">Nombre del Convenio</label>
+    <InputText
+      value={formData.nombre_convenio}
+      placeholder="Nombre del convenio"
+      onChange={(e) => handleChange("nombre_convenio", e.target.value)}
+      className="w-full border border-gray-400 rounded-md p-2 bg-white"
+    />
+  </div>
 
-        <div>
-          <label className="font-semibold">Presupuesto</label>
-          <InputText
-            key="presupuesto"
-            value={formData.presupuesto}
-            onChange={(e) => handleChange("presupuesto", e.target.value)}
-            className="w-full border border-gray-400 rounded-md p-2 bg-white"
-          />
-        </div>
+  <div className="col-span-2">
+    <label className="font-semibold">Objeto del Convenio</label>
+    <InputTextarea
+      value={formData.objeto_convenio}
+      placeholder="Describa el objeto del convenio"
+      onChange={(e) => handleChange("objeto_convenio", e.target.value)}
+      rows={3}
+      className="w-full border border-gray-400 rounded-md p-2 bg-white"
+    />
+  </div>
 
-        <div className="col-span-2">
-          <label className="font-semibold">Instancias Técnicas</label>
-          <InputTextarea
-            value={formData.instancias_tecnicas}
-            onChange={(e) => handleChange("instancias_tecnicas", e.target.value)}
-            rows={2}
-            className="w-full border border-gray-400 rounded-md p-2 bg-white"
-          />
-        </div>
+  <div>
+    <label className="font-semibold">Tipo de Instrumento</label>
+    <InputText
+      value={formData.tipo_instrumento}
+      placeholder="Ej: Convenio, Acuerdo..."
+      onChange={(e) => handleChange("tipo_instrumento", e.target.value)}
+      className="w-full border border-gray-400 rounded-md p-2 bg-white"
+    />
+  </div>
 
-        <div className="col-span-2">
-          <label className="font-semibold">Informe</label>
-          <InputTextarea
-            value={formData.informe}
-            onChange={(e) => handleChange("informe", e.target.value)}
-            rows={2}
-            className="w-full border border-gray-400 rounded-md p-2 bg-white"
-          />
-        </div>
+  <div>
+    <label className="font-semibold">Presupuesto</label>
+    <InputText
+      type="number"
+      key="presupuesto"
+      value={formData.presupuesto}
+      placeholder="Ingrese el presupuesto (solo números)"
+      onChange={(e) => handleChange("presupuesto", e.target.value)}
+      className="w-full border border-gray-400 rounded-md p-2 bg-white"
+    />
+  </div>
 
-        <div>
-          <label className="font-semibold">Fecha Rige</label>
-          <Calendar
-            value={formData.fecha_rige}
-            onChange={(e) => handleChange("fecha_rige", e.value)}
-            showIcon
-            dateFormat="dd/mm/yy"
-            className="w-full border border-gray-400 rounded-md p-2 bg-white"
-          />
-        </div>
+  <div className="col-span-2">
+    <label className="font-semibold">Instancias Técnicas</label>
+    <InputTextarea
+      value={formData.instancias_tecnicas}
+      placeholder="Instancias técnicas involucradas"
+      onChange={(e) => handleChange("instancias_tecnicas", e.target.value)}
+      rows={2}
+      className="w-full border border-gray-400 rounded-md p-2 bg-white"
+    />
+  </div>
 
-        <div>
-          <label className="font-semibold">Fecha Vencimiento</label>
-          <Calendar
-            value={formData.fecha_vencimiento}
-            onChange={(e) => handleChange("fecha_vencimiento", e.value)}
-            showIcon
-            dateFormat="dd/mm/yy"
-            className="w-full border border-gray-400 rounded-md p-2 bg-white"
-          />
-        </div>
+  <div className="col-span-2">
+    <label className="font-semibold">Informe</label>
+    <InputTextarea
+      value={formData.informe}
+      placeholder="Informe relacionado con el convenio"
+      onChange={(e) => handleChange("informe", e.target.value)}
+      rows={2}
+      className="w-full border border-gray-400 rounded-md p-2 bg-white"
+    />
+  </div>
 
-        <div>
-          <label className="font-semibold">Cooperante</label>
-          <InputText
-            value={formData.cooperante}
-            onChange={(e) => handleChange("cooperante", e.target.value)}
-            className="w-full border border-gray-400 rounded-md p-2 bg-white"
-          />
-        </div>
+  <div>
+    <label className="font-semibold">Fecha Rige</label>
+    <Calendar
+      value={formData.fecha_rige}
+      placeholder="Seleccione fecha de inicio"
+      onChange={(e) => handleChange("fecha_rige", e.value)}
+      showIcon
+      dateFormat="dd/mm/yy"
+      className="w-full border border-gray-400 rounded-md p-2 bg-white"
+    />
+  </div>
 
-        <div>
-          <label className="font-semibold">Contraparte Externa</label>
-          <InputText
-            value={formData.contraparte_externa}
-            onChange={(e) => handleChange("contraparte_externa", e.target.value)}
-            className="w-full border border-gray-400 rounded-md p-2 bg-white"
-          />
-        </div>
-      </div>
+  <div>
+    <label className="font-semibold">Fecha Vencimiento</label>
+    <Calendar
+      value={formData.fecha_vencimiento}
+      placeholder="Seleccione fecha de vencimiento"
+      onChange={(e) => handleChange("fecha_vencimiento", e.value)}
+      showIcon
+      dateFormat="dd/mm/yy"
+      className="w-full border border-gray-400 rounded-md p-2 bg-white"
+    />
+  </div>
+
+  
+</div>
+
     </Dialog>
   );
 }
