@@ -3,11 +3,13 @@ import { useSidebar } from "../context/SidebarContext";
 import { Sidebar as PrimeSidebar } from "primereact/sidebar";
 import { Button } from "primereact/button";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 import Image from "next/image";
 
 export default function Sidebar() {
   const { isSidebarVisible, setSidebarVisible } = useSidebar();
   const router = useRouter();
+  const [showSubmenu, setShowSubmenu] = useState(false);
 
   return (
     <PrimeSidebar
@@ -68,6 +70,49 @@ export default function Sidebar() {
             }}
           />
         </li>
+
+        {/* Dropdown para ver el apartado de oportunidades */}
+        <li>
+          <Button
+            label="Oportunidades"
+            icon="pi pi-thumbtack"
+            iconPos="left"
+            className={`w-full flex items-center justify-between bg-gray-100 text-gray-700 hover:bg-[#CDA95F] hover:text-white transition-all duration-300 p-3 rounded-lg ${
+              showSubmenu ? "bg-[#CDA95F] text-black" : ""
+            }`}
+            onClick={() => setShowSubmenu((prev) => !prev)}
+          >
+            <span className="ml-auto pr-2">
+              <i className={`pi pi-chevron-${showSubmenu ? "up" : "down"}`}></i>
+            </span>
+          </Button>
+
+          {showSubmenu && (
+            <ul className="pl-6 mt-2 space-y-2">
+              <li>
+                <Button
+                  label="Datos"
+                  className="w-full justify-start bg-gray-50 text-gray-700 hover:bg-[#CDA95F] hover:text-white transition-all duration-300 p-2 rounded-md"
+                  onClick={() => {
+                    router.push("/oportunidades");
+                    setSidebarVisible(false);
+                  }}
+                />
+              </li>
+              <li>
+                <Button
+                  label="Gráficas"
+                  className="w-full justify-start bg-gray-50 text-gray-700 hover:bg-[#CDA95F] hover:text-white transition-all duration-300 p-2 rounded-md"
+                  onClick={() => {
+                    router.push("/graficasOport");
+                    setSidebarVisible(false);
+                  }}
+                />
+              </li>
+            </ul>
+          )}
+        </li>
+
 
         {/* Botón para Ver Estadísticas */}
         <li>
