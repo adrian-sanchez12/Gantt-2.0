@@ -7,6 +7,10 @@ import { InputText } from "primereact/inputtext";
 import { FilterMatchMode } from "primereact/api";
 import { Button } from "primereact/button";
 import { Toast } from "primereact/toast";
+import { ConfirmPopup } from 'primereact/confirmpopup';
+import { ConfirmDialog } from "primereact/confirmdialog";
+
+
 import AgregarOportunidadDialog from "./AgregarOportunidadDialog";
 import EditarOportunidadDialog from "./EditarOportunidadDialog";
 
@@ -33,17 +37,55 @@ export default function OportunidadesTable() {
     }
   };
 
-  const handleDeleteOportunidad = async (id: number) => {
+  const [mostrarConfirmacion, setMostrarConfirmacion] = useState(false);
+  const [selectedId, setSelectedId] = useState<number | null>(null);
+
+  //sirve para que se muestre un dialogo de confirmacion antes 
+  //eliminar una oportunidad
+  const confirmarEliminacion = (id: number) => {
+    setSelectedId(id);
+    setMostrarConfirmacion(true);
+  };
+  //si se decide eliminar
+  const accept = async () => {
+    if (selectedId === null) return;
+
     try {
-      const response = await fetch(`/api/oportunidades?id=${id}`, { method: "DELETE" });
+      const response = await fetch(`/api/oportunidades?id=${selectedId}`, { method: "DELETE" });
       if (!response.ok) throw new Error("Error al eliminar la oportunidad");
 
-      toast.current?.show({ severity: "info", summary: "Eliminado", detail: "Registro eliminado correctamente", life: 3000 });
+      toast.current?.show({
+        severity: "info",
+        summary: "Eliminado",
+        detail: "Registro eliminado correctamente",
+        life: 3000,
+      });
       fetchOportunidades();
     } catch (error) {
-      toast.current?.show({ severity: "error", summary: "Error", detail: "No se pudo eliminar el registro", life: 3000 });
+      toast.current?.show({
+        severity: "error",
+        summary: "Error",
+        detail: "No se pudo eliminar el registro",
+        life: 3000,
+      });
+    } finally {
+      setSelectedId(null);
+      setMostrarConfirmacion(false);
     }
   };
+  //si no
+  const reject = () => {
+    toast.current?.show({
+      severity: "warn",
+      summary: "Cancelado",
+      detail: "Eliminación cancelada",
+      life: 3000,
+    });
+    setSelectedId(null);
+    setMostrarConfirmacion(false);
+  };
+
+
 
   const abrirDialogEditar = (rowData: any) => {
     setRegistroSeleccionado(rowData);
@@ -106,6 +148,27 @@ export default function OportunidadesTable() {
   return (
     <div className="p-4">
       <Toast ref={toast} />
+      <ConfirmDialog
+        visible={mostrarConfirmacion}
+        onHide={() => setMostrarConfirmacion(false)}
+        message="¿Está seguro de que desea eliminar esta oportunidad?"
+        header="Confirmar eliminación"
+        icon="pi pi-exclamation-triangle"
+        accept={accept}
+        reject={reject}
+        acceptLabel="Sí"
+        rejectLabel="No"
+        acceptClassName="p-button-danger"
+        rejectClassName="p-button-text"
+        className="w-[90vw] md:w-[30rem]"
+        footer={(  // 👇 Personalización para separar botones
+          <div className="flex justify-end gap-3">
+            <Button label="No" icon="pi pi-times" onClick={reject} className="p-button-text" />
+            <Button label="Sí" icon="pi pi-check" onClick={accept} className="p-button-danger" />
+          </div>
+        )}
+      />
+
 
       <div className="flex justify-between items-center mb-6">
         <div className="flex items-center gap-2 w-full max-w-md">
@@ -114,14 +177,16 @@ export default function OportunidadesTable() {
             value={globalFilter}
             onChange={(e) => setGlobalFilter(e.target.value)}
             placeholder="Buscar..."
-            className="p-inputtext-sm w-full border border-gray-400 rounded-md px-3 py-2 bg-white shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-300"
+            className="p-inputtext-sm w-full border border-gray-400 rounded-md px-3 py-2 bg-white shadow-sm focus:ring-2
+                       focus:ring-blue-500 focus:border-blue-500 transition-all duration-300"
           />
         </div>
 
         <Button
           label="Añadir Oportunidad"
           icon="pi pi-plus"
-          className="bg-[#172951] hover:bg-[#CDA95F] text-white font-semibold py-2 px-4 rounded-lg shadow-md transition-all duration-300 transform hover:scale-105 text-sm"
+          className="bg-[#172951] hover:bg-[#CDA95F] text-white font-semibold py-2 px-4 rounded-lg shadow-md transition-all 
+                      duration-300 transform hover:scale-105 text-sm"
           onClick={() => setShowAddDialog(true)}
         />
       </div>
@@ -142,6 +207,17 @@ export default function OportunidadesTable() {
         <Column expander style={{ width: "3rem" }} />
         <Column field="nombre_oportunidad" header="Nombre de la oportunidad" sortable />
         <Column field="socio" header="Socio estratégico" sortable />
+        <Column field="fecha_inicio" header="Fecha de inicio" sortable
+          body={(rowData) => {
+            {/*Le da formato a la fecha para que no se vea feo*/}
+            const fecha = new Date(rowData.fecha_inicio);
+            return fecha.toLocaleDateString("es-CR", {
+              day: "2-digit",
+              month: "2-digit",
+              year: "numeric",
+            });
+          }}
+        />
         <Column field="modalidad" header="Modalidad" sortable />
         <Column
           header="Acciones"
@@ -155,8 +231,9 @@ export default function OportunidadesTable() {
               <Button
                 icon="pi pi-times"
                 className="p-button-rounded p-button-danger p-button-sm"
-                onClick={() => handleDeleteOportunidad(rowData.id)}
+                onClick={() => confirmarEliminacion(rowData.id)}
               />
+
             </div>
           )}
           style={{ textAlign: "center", width: "110px" }}

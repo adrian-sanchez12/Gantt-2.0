@@ -55,20 +55,34 @@ export default function Estadistica2() {
     ],
   };
 
-  const chartOptions = {
-    maintainAspectRatio: false, 
-    responsive: true,
-    plugins: {
-      legend: {
-        position: "bottom",
-        labels: {
-          font: {
-            size: 12, 
-          },
+const chartOptions = {
+  maintainAspectRatio: false,
+  responsive: true,
+  plugins: {
+    legend: {
+      position: "bottom",
+      labels: {
+        font: {
+          size: 12,
         },
       },
     },
-  };
+    datalabels: {
+      color: "#333",
+      formatter: (value: number, context: any) => {
+        const sum = context.chart.data.datasets[0].data.reduce((a: number, b: number) => a + b, 0);
+        const percentage = ((value / sum) * 100).toFixed(1);
+        return `${percentage}%`;
+      },
+      anchor: "end",
+      align: "end",
+      offset: 10,
+      font: {
+        weight: "bold" as const,
+      },
+    },
+  },
+};
 
   return (
     <div className="p-6 bg-white shadow-lg rounded-lg flex">

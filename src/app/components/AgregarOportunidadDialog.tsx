@@ -35,7 +35,6 @@ const sectores = [
   { label: "Academia", value: " Academia" },
   { label: "Público", value: "Público" },
   { label: "Privado", value: "Privado" },
-  { label: "Otro (escribir)", value: "Otro" },
 ];
 
 const temas = [
@@ -60,6 +59,7 @@ const despachos = [
   { label: "Académico", value: "Académico" },
   { label: "Administrativo", value: "Administrativo" },
   { label: "Planificación Institucional y Coordinación Regional", value: "Planificación y Coordinación Regional" },
+  { label: "Interdisciplinario (escribir)", value: "Interdisciplinario" },
 ];
 
 const poblaciones = [
@@ -68,7 +68,7 @@ const poblaciones = [
   { label: "Asesores", value: " Asesores" },
   { label: "Autoridades MEP", value: "Autoridades MEP" },
   { label: "Directores MEP", value: "Directores MEP" },
-  { label: "Otro (escribir)", value: "Otro" },
+  { label: "Varios (escribir)", value: "Otro" },
 ];
 
 //Los que dicen otros se necesitan para los dropdowns que contienen "Otro" como opción
@@ -81,17 +81,21 @@ export default function AgregarOportunidadDialog({ visible, onHide, onSave }: Ag
     otroTipo: "",
     socio: "",
     sector: "",
-    otroSector: "",
     tema: "",
     otroTema: "",
     poblacion_meta: "",
     otraPoblacion: "",
     despacho: "",
+    otroDespacho: "",
     direccion_envio: "",
     fecha_inicio: null,
     fecha_fin: null,
     funcionario: "",
   });
+
+  //Mensaje de error de información faltante
+  const [errorMensaje, setErrorMensaje] = useState<string | null>(null);
+  const [camposConError, setCamposConError] = useState<string[]>([]);
 
   const handleChange = (field: string, value: any) => {
     setFormData({ ...formData, [field]: value });
@@ -104,18 +108,34 @@ export default function AgregarOportunidadDialog({ visible, onHide, onSave }: Ag
     try {
       const payload = {
         ...formData,
-        //Permite que lo que el ususario escriba en otro se agregue directamente a la db
+        //Permite que lo que el usuario escriba en otro se agregue directamente a la db
         tipo_oportunidad:
           formData.tipo_oportunidad === "Otro" ? formData.otroTipo : formData.tipo_oportunidad,
-        sector:
-          formData.sector === "Otro" ? formData.otroSector : formData.sector,
         tema:
           formData.tema === "Otro" ? formData.otroTema : formData.tema,
+        despacho:
+          formData.despacho === "Interdisciplinario" ? formData.otroDespacho : formData.despacho,
         poblacion_meta:
           formData.poblacion_meta === "Otro" ? formData.otraPoblacion : formData.poblacion_meta,
         fecha_inicio: formatDate(formData.fecha_inicio),
         fecha_fin: formatDate(formData.fecha_fin),
       };
+
+      //Error de campo faltante
+      const camposFaltantes: string[] = [];
+      if (!formData.nombre_oportunidad) camposFaltantes.push("nombre_oportunidad");
+      if (!formData.objetivo) camposFaltantes.push("objetivo");
+      if (!formData.fecha_inicio) camposFaltantes.push("fecha_inicio");
+      if (!formData.socio) camposFaltantes.push("socio");
+
+      if (camposFaltantes.length > 0) {
+        setCamposConError(camposFaltantes);
+        setErrorMensaje("Por favor complete todos los campos obligatorios.");
+        return;
+      }
+
+      setCamposConError([]);
+      setErrorMensaje(null);
 
       const response = await fetch("/api/oportunidades", {
         method: "POST",
@@ -123,7 +143,15 @@ export default function AgregarOportunidadDialog({ visible, onHide, onSave }: Ag
         body: JSON.stringify(payload),
       });
 
-      if (!response.ok) throw new Error("Error al guardar la oportunidad");
+      if (!response.ok) {
+        const errorData = await response.json();
+        setErrorMensaje(errorData.error || "Error al guardar la oportunidad");
+        return;
+      }
+      else {
+        setErrorMensaje(null);
+      }
+
 
       onSave();
       onHide();
@@ -135,12 +163,12 @@ export default function AgregarOportunidadDialog({ visible, onHide, onSave }: Ag
         otroTipo: "",
         socio: "",
         sector: "",
-        otroSector: "",
         tema: "",
         otroTema: "",
         poblacion_meta: "",
         otraPoblacion: "",
         despacho: "",
+        otroDespacho: "",
         direccion_envio: "",
         fecha_inicio: null,
         fecha_fin: null,
@@ -151,6 +179,30 @@ export default function AgregarOportunidadDialog({ visible, onHide, onSave }: Ag
     }
   };
 
+  const limpiarFormulario = () => {
+      setFormData({
+        nombre_oportunidad: "",
+        objetivo: "",
+        modalidad: "",
+        tipo_oportunidad: "",
+        otroTipo: "",
+        socio: "",
+        sector: "",
+        tema: "",
+        otroTema: "",
+        poblacion_meta: "",
+        otraPoblacion: "",
+        despacho: "",
+        otroDespacho: "",
+        direccion_envio: "",
+        fecha_inicio: null,
+        fecha_fin: null,
+        funcionario: "",
+      });
+      setCamposConError([]);
+      setErrorMensaje(null);
+    };
+    
   return (
     <Dialog
       header="Agregar oportunidad profesional"
@@ -165,7 +217,10 @@ export default function AgregarOportunidadDialog({ visible, onHide, onSave }: Ag
             label="Cancelar"
             icon="pi pi-times"
             className="p-button-outlined p-button-secondary"
-            onClick={onHide}
+            onClick={() => {
+              limpiarFormulario();
+              onHide();
+            }}
           />
           <Button
             label="Guardar"
@@ -176,13 +231,22 @@ export default function AgregarOportunidadDialog({ visible, onHide, onSave }: Ag
         </div>
       }
     >
+      {errorMensaje && (
+        <div className="col-span-2 mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded text-sm">
+          {errorMensaje}
+        </div>
+      )}
       <div className="grid grid-cols-2 gap-6 text-sm mt-2">
         <div className="col-span-2">
           <label className="font-semibold">Nombre de la oportunidad</label>
           <InputText
             value={formData.nombre_oportunidad}
             onChange={(e) => handleChange("nombre_oportunidad", e.target.value)}
-            className="w-full border border-gray-300 rounded-lg p-5 bg-white"
+            //Ayuda visual con el control de errores de falta de información
+            className={`w-full border rounded-lg p-5 bg-white ${camposConError.includes("nombre_oportunidad")
+              ? "border-red-500"
+              : "border-gray-300"
+              }`}
           />
         </div>
 
@@ -191,7 +255,10 @@ export default function AgregarOportunidadDialog({ visible, onHide, onSave }: Ag
           <InputText
             value={formData.objetivo}
             onChange={(e) => handleChange("objetivo", e.target.value)}
-            className="w-full border border-gray-300 rounded-lg p-5 bg-white"
+            className={`w-full border rounded-lg p-5 bg-white ${camposConError.includes("objetivo")
+              ? "border-red-500"
+              : "border-gray-300"
+              }`}
           />
         </div>
 
@@ -217,7 +284,7 @@ export default function AgregarOportunidadDialog({ visible, onHide, onSave }: Ag
           />
           {formData.tipo_oportunidad === "Otro" && (
             <InputText
-              value={formData.otroTema ?? ""}
+              value={formData.otroTipo ?? ""}
               onChange={(e) => setFormData({ ...formData, otroTipo: e.target.value })}
               placeholder="Escriba el tipo"
               className="w-full mt-2 bg-gray-100 text-sm border-none rounded-none"
@@ -230,30 +297,25 @@ export default function AgregarOportunidadDialog({ visible, onHide, onSave }: Ag
           <InputText
             value={formData.socio}
             onChange={(e) => handleChange("socio", e.target.value)}
-            className="w-full border border-gray-300 rounded-md p-2 bg-white"
+            className={`w-full border rounded-lg p-5 bg-white ${camposConError.includes("socio")
+              ? "border-red-500"
+              : "border-gray-300"
+              }`}
           />
           <p className="text-xs font-semibold mt-2 text-gray-700">
-            Por favor escriba el nombre completo, no siglas.
+            *Por favor escriba el nombre completo, no siglas.
           </p>
         </div>
 
         <div>
-          <label className="font-semibold">Sector de cooperación</label>
+          <label className="font-semibold">Sector</label>
           <Dropdown
             value={formData.sector}
             options={sectores}
-            onChange={(e) => setFormData({ ...formData, sector: e.value, otroSector: e.value === "Otro" ? "" : "" })}
+            onChange={(e) => setFormData({ ...formData, sector: e.value })}
             placeholder="Seleccione el sector"
             className="w-full border border-gray-300 rounded-md py-0 px-2 bg-white text-sm"
           />
-          {formData.sector === "Otro" && (
-            <InputText
-              value={formData.otroSector ?? ""}
-              onChange={(e) => setFormData({ ...formData, otroSector: e.target.value })}
-              placeholder="Escriba el sector"
-              className="w-full mt-2"
-            />
-          )}
         </div>
 
         <div>
@@ -295,14 +357,25 @@ export default function AgregarOportunidadDialog({ visible, onHide, onSave }: Ag
         </div>
 
         <div>
-          <label className="font-semibold">Despacho:</label>
+          <label className="font-semibold">Viceministerio</label>
           <Dropdown
             value={formData.despacho}
             options={despachos}
-            onChange={(e) => setFormData({ ...formData, despacho: e.value })}
+            onChange={(e) => setFormData({ ...formData, despacho: e.value, otroDespacho: e.value === "Interdisciplinario" ? "" : "" })}
             placeholder="Seleccione el despacho"
             className="w-full border border-gray-300 rounded-md py-0 px-2 bg-white text-sm"
           />
+          {formData.despacho === "Interdisciplinario" && (
+            <InputText
+              value={formData.otroDespacho ?? ""}
+              onChange={(e) => setFormData({ ...formData, otroDespacho: e.target.value })}
+              placeholder="Escriba los viceministerios"
+              className="w-full mt-2 bg-gray-100 text-sm border-none rounded-none"
+            />
+          )}
+          <p className="text-xs font-semibold mt-2 text-gray-700">
+            *En caso de escribir varios, sepárelos con una coma.
+          </p>
         </div>
 
         <div>
@@ -313,7 +386,8 @@ export default function AgregarOportunidadDialog({ visible, onHide, onSave }: Ag
             className="w-full border border-gray-300 rounded-md p-2 bg-white"
           />
           <p className="text-xs font-semibold mt-2 text-gray-700">
-            Por favor escriba el nombre directo de la dirección.
+            *Por favor escriba el nombre directo de la dirección.
+            *En caso de ser más de uno, sepárelos con una coma.
           </p>
         </div>
 
@@ -324,7 +398,10 @@ export default function AgregarOportunidadDialog({ visible, onHide, onSave }: Ag
             onChange={(e) => handleChange("fecha_inicio", e.value)}
             showIcon
             dateFormat="dd/mm/yy"
-            className="w-full border border-gray-300 rounded-md p-2 bg-white"
+            className={`w-full border rounded-lg p-5 bg-white ${camposConError.includes("fecha_inicio")
+              ? "border-red-500"
+              : "border-gray-300"
+              }`}
           />
         </div>
 

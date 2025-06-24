@@ -61,6 +61,7 @@ const despachos = [
     { label: "Académico", value: "Académico" },
     { label: "Administrativo", value: "Administrativo" },
     { label: "Planificación Institucional y Coordinación Regional", value: "Planificación y Coordinación Regional" },
+    { label: "Interdisciplinario(escribir)", value: "Interdisciplinario" },
 ];
 
 const poblaciones = [
@@ -106,6 +107,8 @@ export default function EditarOportunidadDialog({
                     formData.tema === "Otro" ? formData.otroTema : formData.tema,
                 poblacion_meta:
                     formData.poblacion_meta === "Otro" ? formData.otraPoblacion : formData.poblacion_meta,
+                despacho:
+                    formData.despacho === "Interdisciplinario" ? formData.otroDespacho : formData.despacho,
                 fecha_inicio: formatDate(formData.fecha_inicio),
                 fecha_fin: formatDate(formData.fecha_fin),
             };
@@ -208,7 +211,7 @@ export default function EditarOportunidadDialog({
                             className="w-full border border-gray-300 rounded-md p-2 bg-white"
                         />
                         <p className="text-xs font-semibold mt-2 text-gray-700">
-                            Por favor escriba el nombre completo, no siglas.
+                            *Por favor escriba el nombre completo, no siglas.
                         </p>
                     </div>
 
@@ -270,14 +273,25 @@ export default function EditarOportunidadDialog({
                     </div>
 
                     <div>
-                        <label className="font-semibold">Despacho:</label>
+                        <label className="font-semibold">Viceministerio</label>
                         <Dropdown
                             value={formData.despacho}
                             options={despachos}
-                            onChange={(e) => setFormData({ ...formData, despacho: e.value })}
+                            onChange={(e) => setFormData({ ...formData, despacho: e.value, otroDespacho: e.value === "Interdisciplinario" ? "" : "" })}
                             placeholder="Seleccione el despacho"
                             className="w-full border border-gray-300 rounded-md py-0 px-2 bg-white text-sm"
                         />
+                        {formData.despacho === "Interdisciplinario" && (
+                            <InputText
+                                value={formData.otroDespacho ?? ""}
+                                onChange={(e) => setFormData({ ...formData, otroDespacho: e.target.value })}
+                                placeholder="Escriba los viceministerios"
+                                className="w-full mt-2 bg-gray-100 text-sm border-none rounded-none"
+                            />
+                        )}
+                        <p className="text-xs font-semibold mt-2 text-gray-700">
+                            *En caso de escribir varios, sepárelos con una coma.
+                        </p>
                     </div>
 
 
@@ -289,7 +303,8 @@ export default function EditarOportunidadDialog({
                             className="w-full border border-gray-300 rounded-md p-2 bg-white"
                         />
                         <p className="text-xs font-semibold mt-2 text-gray-700">
-                            Por favor escriba el nombre directo de la dirección.
+                            *Por favor escriba el nombre directo de la dirección.
+                            *En caso de ser más de uno, sepárelos con una coma.
                         </p>
                     </div>
 

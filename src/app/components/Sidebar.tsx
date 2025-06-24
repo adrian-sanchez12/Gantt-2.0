@@ -74,7 +74,7 @@ export default function Sidebar() {
         {/* Dropdown para ver el apartado de oportunidades */}
         <li>
           <Button
-            label="Oportunidades"
+            label="Oportunidades profesionales"
             icon="pi pi-thumbtack"
             iconPos="left"
             className={`w-full flex items-center justify-between bg-gray-100 text-gray-700 hover:bg-[#CDA95F] hover:text-white transition-all duration-300 p-3 rounded-lg ${
