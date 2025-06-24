@@ -148,7 +148,7 @@ export default function OportunidadesPorSocio() {
   return (
     <div className="p-6 bg-white shadow-lg rounded-lg flex flex-col">
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-xl font-bold text-gray-800">📊 Oportunidades por Socio</h2>
+        <h2 className="text-xl font-bold text-gray-800">📊 Distribución por socio</h2>
         <div className="pt-2">
           <Dropdown
             value={anioSeleccionado}
@@ -161,7 +161,7 @@ export default function OportunidadesPorSocio() {
         </div>
       </div>
 
-      <div className="w-full mb-6" style={{ height: '700px', overflow: "visible" }}>
+      <div className="w-full mb-6" style={{ height: '800px', overflow: "scroll" }}>
         <Chart type="bar" data={barChartData} options={chartOptions} />
       </div>
 

@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import { Chart } from "primereact/chart";
 import { Dropdown } from "primereact/dropdown";
 import { Accordion, AccordionTab } from "primereact/accordion";
-
 //Data Labels para las gráficas
 import ChartDataLabels from "chartjs-plugin-datalabels";
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from "chart.js";
@@ -76,6 +75,7 @@ export default function GraficoPoblacion() {
     )
   ).sort();
 
+    //Filtra por año
   const oportunidadesFiltradas = anioSeleccionado
     ? oportunidades.filter((o) => o.fecha_inicio?.startsWith(anioSeleccionado))
     : oportunidades;

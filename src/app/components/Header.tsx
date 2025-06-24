@@ -1,5 +1,5 @@
 "use client";
-import { useRouter } from "next/navigation";
+import { redirect, useRouter } from "next/navigation";
 import { Button } from "primereact/button";
 import { useSidebar } from "../context/SidebarContext";
 import Image from "next/image";
@@ -33,6 +33,8 @@ export default function Header() {
           width={280}  
           height={70}
           priority
+          className="cursor-pointer"
+          onClick={() => router.push("/")}
         />
       </div>
 

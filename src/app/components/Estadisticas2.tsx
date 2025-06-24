@@ -44,28 +44,38 @@ export default function Estadistica2() {
     fetchData();
   }, []);
 
+  //sirve para que solo muestre fases con por lo menos 1 convenio
+  const fasesConDatos = Object.entries(conveniosPorFase).filter(
+    ([, convenios]) => convenios.length > 0
+  );
+
   // Preparar datos para el PieChart
-  const pieChartData = {
-    labels: Object.keys(conveniosPorFase),
-    datasets: [
-      {
-        data: Object.values(conveniosPorFase).map(convenios => convenios.length),
-        backgroundColor: fases.map(f => f.color),
-      },
-    ],
-  };
+const pieChartData = {
+  labels: fasesConDatos.map(([fase]) => fase),
+  datasets: [
+    {
+      data: fasesConDatos.map(([, convenios]) => convenios.length),
+      backgroundColor: fasesConDatos.map(
+        ([fase]) => fases.find(f => f.nombre === fase)?.color || "#D1D5DB"
+      ),
+    },
+  ],
+};
 
 const chartOptions = {
   maintainAspectRatio: false,
   responsive: true,
+  layout: {
+      padding: {
+        top: 40,
+        bottom: 30,
+        left: 40,
+        right: 50,
+      },
+    },
   plugins: {
     legend: {
-      position: "bottom",
-      labels: {
-        font: {
-          size: 12,
-        },
-      },
+      display: false,
     },
     datalabels: {
       color: "#333",

@@ -51,6 +51,7 @@ const temas = [
   { label: "Evaluación Educativa", value: "Evaluación Educativa" },
   { label: "Multilinguismo", value: "Multilinguismo" },
   { label: "Alianzas estratégicas", value: "Alianzas estratégicas" },
+  { label: "Gestión de riesgos", value: "Gestión de riesgos" },
   { label: "Otro (escribir)", value: "Otro" },
 ];
 
@@ -65,7 +66,8 @@ const despachos = [
 const poblaciones = [
   { label: "Estudiantes", value: "Estudiantes" },
   { label: "Docentes", value: "Docentes" },
-  { label: "Asesores", value: " Asesores" },
+  { label: "Asesores", value: "Asesores" },
+  { label: "Comunidad estudiantil", value: "Comunidad estudiantil" },
   { label: "Autoridades MEP", value: "Autoridades MEP" },
   { label: "Directores MEP", value: "Directores MEP" },
   { label: "Varios (escribir)", value: "Otro" },
@@ -152,7 +154,6 @@ export default function AgregarOportunidadDialog({ visible, onHide, onSave }: Ag
         setErrorMensaje(null);
       }
 
-
       onSave();
       onHide();
       setFormData({
@@ -180,29 +181,29 @@ export default function AgregarOportunidadDialog({ visible, onHide, onSave }: Ag
   };
 
   const limpiarFormulario = () => {
-      setFormData({
-        nombre_oportunidad: "",
-        objetivo: "",
-        modalidad: "",
-        tipo_oportunidad: "",
-        otroTipo: "",
-        socio: "",
-        sector: "",
-        tema: "",
-        otroTema: "",
-        poblacion_meta: "",
-        otraPoblacion: "",
-        despacho: "",
-        otroDespacho: "",
-        direccion_envio: "",
-        fecha_inicio: null,
-        fecha_fin: null,
-        funcionario: "",
-      });
-      setCamposConError([]);
-      setErrorMensaje(null);
-    };
-    
+    setFormData({
+      nombre_oportunidad: "",
+      objetivo: "",
+      modalidad: "",
+      tipo_oportunidad: "",
+      otroTipo: "",
+      socio: "",
+      sector: "",
+      tema: "",
+      otroTema: "",
+      poblacion_meta: "",
+      otraPoblacion: "",
+      despacho: "",
+      otroDespacho: "",
+      direccion_envio: "",
+      fecha_inicio: null,
+      fecha_fin: null,
+      funcionario: "",
+    });
+    setCamposConError([]);
+    setErrorMensaje(null);
+  };
+
   return (
     <Dialog
       header="Agregar oportunidad profesional"
@@ -269,7 +270,9 @@ export default function AgregarOportunidadDialog({ visible, onHide, onSave }: Ag
             options={modalidades}
             onChange={(e) => setFormData({ ...formData, modalidad: e.value })}
             placeholder="Seleccione la modalidad"
-            className="w-full border border-gray-300 rounded-md py-0 px-2 bg-white text-sm"
+            className="w-full text-sm border border-gray-300 rounded-md"
+            panelClassName="text-sm"
+            style={{ height: "45px", padding: "0 0.25rem", fontSize: "0.875rem" }}
           />
         </div>
 
@@ -297,10 +300,11 @@ export default function AgregarOportunidadDialog({ visible, onHide, onSave }: Ag
           <InputText
             value={formData.socio}
             onChange={(e) => handleChange("socio", e.target.value)}
-            className={`w-full border rounded-lg p-5 bg-white ${camposConError.includes("socio")
+            className={`w-full border rounded-md p-3 bg-white ${camposConError.includes("socio")
               ? "border-red-500"
               : "border-gray-300"
-              }`}
+              }`
+            }
           />
           <p className="text-xs font-semibold mt-2 text-gray-700">
             *Por favor escriba el nombre completo, no siglas.
@@ -383,11 +387,20 @@ export default function AgregarOportunidadDialog({ visible, onHide, onSave }: Ag
           <InputText
             value={formData.direccion_envio}
             onChange={(e) => handleChange("direccion_envio", e.target.value)}
-            className="w-full border border-gray-300 rounded-md p-2 bg-white"
+            className="w-full border border-gray-300 rounded-md p-3 bg-white"
           />
           <p className="text-xs font-semibold mt-2 text-gray-700">
-            *Por favor escriba el nombre directo de la dirección.
-            *En caso de ser más de uno, sepárelos con una coma.
+            * En caso de ser más de uno, sepárelos con una coma. <br />
+            * Favor poner el nombre completo de la dirección. En caso de no saberlo,
+            puede consultarlo en el siguiente{" "}
+            <a
+              href="https://www.mep.go.cr/sites/default/files/2025-05/Organigrama.pdf"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-600 underline hover:text-blue-800 transition"
+            >
+              enlace
+            </a>.
           </p>
         </div>
 
@@ -398,7 +411,7 @@ export default function AgregarOportunidadDialog({ visible, onHide, onSave }: Ag
             onChange={(e) => handleChange("fecha_inicio", e.value)}
             showIcon
             dateFormat="dd/mm/yy"
-            className={`w-full border rounded-lg p-5 bg-white ${camposConError.includes("fecha_inicio")
+            className={`w-full border rounded-md p-3 bg-white ${camposConError.includes("fecha_inicio")
               ? "border-red-500"
               : "border-gray-300"
               }`}
@@ -412,7 +425,7 @@ export default function AgregarOportunidadDialog({ visible, onHide, onSave }: Ag
             onChange={(e) => handleChange("fecha_fin", e.value)}
             showIcon
             dateFormat="dd/mm/yy"
-            className="w-full border border-gray-300 rounded-md p-2 bg-white"
+            className="w-full border border-gray-300 rounded-md p-3 bg-white"
           />
         </div>
 
@@ -421,7 +434,7 @@ export default function AgregarOportunidadDialog({ visible, onHide, onSave }: Ag
           <InputText
             value={formData.funcionario}
             onChange={(e) => handleChange("funcionario", e.target.value)}
-            className="w-full border border-gray-300 rounded-md p-2 bg-white"
+            className="w-full border border-gray-300 rounded-md p-3 bg-white"
           />
         </div>
       </div>

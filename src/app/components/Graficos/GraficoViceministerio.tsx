@@ -94,8 +94,8 @@ export default function GraficoViceministerio() {
       padding: {
         top: 40,
         bottom: 20,
-        left: 20,
-        right: 20,
+        left: 50,
+        right: 40,
       },
     },
     plugins: {

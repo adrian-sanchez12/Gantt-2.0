@@ -7,10 +7,7 @@ import { InputText } from "primereact/inputtext";
 import { FilterMatchMode } from "primereact/api";
 import { Button } from "primereact/button";
 import { Toast } from "primereact/toast";
-import { ConfirmPopup } from 'primereact/confirmpopup';
 import { ConfirmDialog } from "primereact/confirmdialog";
-
-
 import AgregarOportunidadDialog from "./AgregarOportunidadDialog";
 import EditarOportunidadDialog from "./EditarOportunidadDialog";
 
@@ -20,6 +17,7 @@ export default function OportunidadesTable() {
   const [globalFilter, setGlobalFilter] = useState("");
   const toast = useRef<Toast>(null);
   const [registroSeleccionado, setRegistroSeleccionado] = useState(null);
+  const fileInputRefs = useRef<Record<number, HTMLInputElement | null>>({});
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showAddDialog, setShowAddDialog] = useState(false);
 
@@ -39,6 +37,58 @@ export default function OportunidadesTable() {
 
   const [mostrarConfirmacion, setMostrarConfirmacion] = useState(false);
   const [selectedId, setSelectedId] = useState<number | null>(null);
+
+  //Manejo de PDF
+  const handleFileUpload = async (event: any, rowData: any) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("id", rowData.id);
+
+    const response = await fetch("/api/upload", {
+      method: "POST",
+      body: formData,
+    });
+
+    if (!response.ok) {
+      toast.current?.show({ severity: "error", summary: "Error", detail: "No se pudo subir el archivo", life: 3000 });
+      return;
+    }
+
+    const { url } = await response.json();
+
+    await fetch("/api/oportunidades", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: rowData.id, doc_pdf: url }),
+    });
+
+    toast.current?.show({ severity: "success", summary: "Éxito", detail: "Archivo subido correctamente", life: 3000 });
+    fetchOportunidades();
+  };
+  //Manejo borrar pdf
+  const handleDeletePDF = async (rowData: any) => {
+    try {
+      await fetch("/api/oportunidades", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: rowData.id, doc_pdf: "" }),
+      });
+
+      toast.current?.show({ severity: "info", summary: "Documento eliminado", detail: "El PDF ha sido eliminado", life: 3000 });
+      fetchOportunidades();
+    } catch (error) {
+      toast.current?.show({ severity: "error", summary: "Error", detail: "No se pudo eliminar el PDF", life: 3000 });
+    }
+  };
+
+  const handleIconClick = (rowData: any) => {
+    fileInputRefs.current[rowData.id]?.click();
+  };
+  //FIN MANEJO PDF
+
 
   //sirve para que se muestre un dialogo de confirmacion antes 
   //eliminar una oportunidad
@@ -85,8 +135,6 @@ export default function OportunidadesTable() {
     setMostrarConfirmacion(false);
   };
 
-
-
   const abrirDialogEditar = (rowData: any) => {
     setRegistroSeleccionado(rowData);
     setShowEditDialog(true);
@@ -120,6 +168,10 @@ export default function OportunidadesTable() {
         <div>
           <strong>Tema:</strong>
           <p>{rowData.tema}</p>
+        </div>
+        <div>
+          <strong>Modalidad:</strong>
+          <p>{rowData.modalidad}</p>
         </div>
         <div>
           <strong>Tipo:</strong>
@@ -207,9 +259,9 @@ export default function OportunidadesTable() {
         <Column expander style={{ width: "3rem" }} />
         <Column field="nombre_oportunidad" header="Nombre de la oportunidad" sortable />
         <Column field="socio" header="Socio estratégico" sortable />
+        <Column field="sector" header="Sector" sortable />
         <Column field="fecha_inicio" header="Fecha de inicio" sortable
           body={(rowData) => {
-            {/*Le da formato a la fecha para que no se vea feo*/}
             const fecha = new Date(rowData.fecha_inicio);
             return fecha.toLocaleDateString("es-CR", {
               day: "2-digit",
@@ -218,7 +270,52 @@ export default function OportunidadesTable() {
             });
           }}
         />
-        <Column field="modalidad" header="Modalidad" sortable />
+        <Column
+          field="doc_pdf"
+          header="Invitación"
+          body={(rowData) => (
+            <div className="flex items-center gap-2">
+              {rowData.doc_pdf ? (
+                <>
+                  <a
+                    href={rowData.doc_pdf}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-600 underline hover:text-blue-800 transition"
+                  >
+                    📄 {rowData.doc_pdf?.split("/").pop() || "archivo.pdf"}
+                  </a>
+                  <Button
+                    icon="pi pi-trash"
+                    className="p-button-text text-red-500 hover:text-red-700"
+                    onClick={() => handleDeletePDF(rowData)}
+                    tooltip="Eliminar PDF"
+                  />
+                </>
+              ) : (
+                <>
+                  <Button
+                    icon="pi pi-upload"
+                    className="p-button-text text-[#172951] hover:text-[#CDA95F] transition"
+                    onClick={() => handleIconClick(rowData)}
+                    tooltip="Subir PDF"
+                  />
+                  <input
+                    type="file"
+                    accept="application/pdf"
+                    ref={(el) => {
+                      if (el) {
+                        fileInputRefs.current[rowData.id] = el;
+                      }
+                    }}
+                    onChange={(event) => handleFileUpload(event, rowData)}
+                    style={{ display: "none" }}
+                  />
+                </>
+              )}
+            </div>
+          )}
+        />
         <Column
           header="Acciones"
           body={(rowData) => (
@@ -227,11 +324,13 @@ export default function OportunidadesTable() {
                 icon="pi pi-pencil"
                 className="p-button-rounded p-button-warning p-button-sm"
                 onClick={() => abrirDialogEditar(rowData)}
+                tooltip="Editar"
               />
               <Button
                 icon="pi pi-times"
                 className="p-button-rounded p-button-danger p-button-sm"
                 onClick={() => confirmarEliminacion(rowData.id)}
+                tooltip="Eliminar"
               />
 
             </div>

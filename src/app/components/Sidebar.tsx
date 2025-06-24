@@ -16,15 +16,15 @@ export default function Sidebar() {
       visible={isSidebarVisible}
       onHide={() => setSidebarVisible(false)}
       showCloseIcon={false} // 🔹 Quita el botón de cierre de arriba
-      className="w-64 h-screen bg-white text-gray-900 border-r shadow-lg p-4 transition-transform duration-300"
+      className="w-64 h-screen bg-white text-gray-900 border-r shadow-lg p-2 transition-transform duration-300"
     >
       {/*  Imagen favicon centrada */}
       <div className="flex justify-center mb-4">
         <Image
           src="/favicon.png" 
           alt="Logo"
-          width={50}  
-          height={50}
+          width={75}  
+          height={75}
           priority
         />
       </div>
@@ -71,49 +71,6 @@ export default function Sidebar() {
           />
         </li>
 
-        {/* Dropdown para ver el apartado de oportunidades */}
-        <li>
-          <Button
-            label="Oportunidades profesionales"
-            icon="pi pi-thumbtack"
-            iconPos="left"
-            className={`w-full flex items-center justify-between bg-gray-100 text-gray-700 hover:bg-[#CDA95F] hover:text-white transition-all duration-300 p-3 rounded-lg ${
-              showSubmenu ? "bg-[#CDA95F] text-black" : ""
-            }`}
-            onClick={() => setShowSubmenu((prev) => !prev)}
-          >
-            <span className="ml-auto pr-2">
-              <i className={`pi pi-chevron-${showSubmenu ? "up" : "down"}`}></i>
-            </span>
-          </Button>
-
-          {showSubmenu && (
-            <ul className="pl-6 mt-2 space-y-2">
-              <li>
-                <Button
-                  label="Datos"
-                  className="w-full justify-start bg-gray-50 text-gray-700 hover:bg-[#CDA95F] hover:text-white transition-all duration-300 p-2 rounded-md"
-                  onClick={() => {
-                    router.push("/oportunidades");
-                    setSidebarVisible(false);
-                  }}
-                />
-              </li>
-              <li>
-                <Button
-                  label="Gráficas"
-                  className="w-full justify-start bg-gray-50 text-gray-700 hover:bg-[#CDA95F] hover:text-white transition-all duration-300 p-2 rounded-md"
-                  onClick={() => {
-                    router.push("/graficasOport");
-                    setSidebarVisible(false);
-                  }}
-                />
-              </li>
-            </ul>
-          )}
-        </li>
-
-
         {/* Botón para Ver Estadísticas */}
         <li>
           <Button
@@ -125,6 +82,48 @@ export default function Sidebar() {
               setSidebarVisible(false);
             }}
           />
+        </li>
+
+        {/* Dropdown para ver el apartado de oportunidades */}
+        <li>
+          <Button
+            label="Oportunidades profesionales"
+            icon="pi pi-thumbtack"
+            iconPos="left"
+            className={`w-full flex items-center justify-between bg-gray-100 text-gray-700 hover:bg-[#CDA95F] hover:text-white transition-all duration-300 p-3 rounded-lg ${
+              showSubmenu ? "bg-[#CDA95F] text-black" : ""
+            }`}
+            onClick={() => setShowSubmenu((prev) => !prev)}
+          >
+            <span className="ml-auto pr-0">
+              <i className={`pi pi-chevron-${showSubmenu ? "up" : "down"}`}></i>
+            </span>
+          </Button>
+
+          {showSubmenu && (
+            <ul className="pl-6 mt-2 space-y-2">
+              <li>
+                <Button
+                  label="Datos"
+                  className="w-full justify-start bg-gray-100 text-gray-700 hover:bg-[#CDA95F] hover:text-white transition-all duration-300 p-2 rounded-md"
+                  onClick={() => {
+                    router.push("/oportunidades");
+                    setSidebarVisible(false);
+                  }}
+                />
+              </li>
+              <li>
+                <Button
+                  label="Gráficas"
+                  className="w-full justify-start bg-gray-100 text-gray-700 hover:bg-[#CDA95F] hover:text-white transition-all duration-300 p-2 rounded-md"
+                  onClick={() => {
+                    router.push("/graficasOport");
+                    setSidebarVisible(false);
+                  }}
+                />
+              </li>
+            </ul>
+          )}
         </li>
       </ul>
 

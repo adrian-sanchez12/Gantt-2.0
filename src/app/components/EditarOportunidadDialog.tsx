@@ -52,6 +52,7 @@ const temas = [
     { label: "Transformación digital", value: "Transformación digital" },
     { label: "Evaluación Educativa", value: "Evaluación Educativa" },
     { label: "Multilinguismo", value: "Multilinguismo" },
+    { label: "Gestión de riesgos", value: "Gestión de riesgos" },
     { label: "Alianzas estratégicas", value: "Alianzas estratégicas" },
     { label: "Otro (escribir)", value: "Otro" },
 ];
@@ -68,6 +69,7 @@ const poblaciones = [
     { label: "Estudiantes", value: "Estudiantes" },
     { label: "Docentes", value: "Docentes" },
     { label: "Asesores", value: " Asesores" },
+    { label: "Comunidad estudiantil", value: "Comunidad estudiantil" },
     { label: "Autoridades MEP", value: "Autoridades MEP" },
     { label: "Directores MEP", value: "Directores MEP" },
     { label: "Otro (escribir)", value: "Otro" },
@@ -84,6 +86,10 @@ export default function EditarOportunidadDialog({
     useEffect(() => {
         setFormData(registro);
     }, [registro]);
+
+    //Mensaje de error de información faltante
+    const [errorMensaje, setErrorMensaje] = useState<string | null>(null);
+    const [camposConError, setCamposConError] = useState<string[]>([]);
 
     const handleChange = (field: string, value: any) => {
         setFormData({ ...formData, [field]: value });
@@ -112,6 +118,22 @@ export default function EditarOportunidadDialog({
                 fecha_inicio: formatDate(formData.fecha_inicio),
                 fecha_fin: formatDate(formData.fecha_fin),
             };
+
+            //Error de campo faltante
+            const camposFaltantes: string[] = [];
+            if (!formData.nombre_oportunidad) camposFaltantes.push("nombre_oportunidad");
+            if (!formData.objetivo) camposFaltantes.push("objetivo");
+            if (!formData.fecha_inicio) camposFaltantes.push("fecha_inicio");
+            if (!formData.socio) camposFaltantes.push("socio");
+
+            if (camposFaltantes.length > 0) {
+                setCamposConError(camposFaltantes);
+                setErrorMensaje("Por favor complete todos los campos obligatorios.");
+                return;
+            }
+
+            setCamposConError([]);
+            setErrorMensaje(null);
 
             const response = await fetch("/api/oportunidades", {
                 method: "PUT",
@@ -160,7 +182,11 @@ export default function EditarOportunidadDialog({
                         <InputText
                             value={formData.nombre_oportunidad}
                             onChange={(e) => handleChange("nombre_oportunidad", e.target.value)}
-                            className="w-full border border-gray-300 rounded-lg p-5 bg-white"
+                            //Ayuda visual con el control de errores de falta de información
+                            className={`w-full border rounded-lg p-5 bg-white ${camposConError.includes("nombre_oportunidad")
+                                ? "border-red-500"
+                                : "border-gray-300"
+                                }`}
                         />
                     </div>
 
@@ -169,7 +195,10 @@ export default function EditarOportunidadDialog({
                         <InputText
                             value={formData.objetivo}
                             onChange={(e) => handleChange("objetivo", e.target.value)}
-                            className="w-full border border-gray-300 rounded-lg p-5 bg-white"
+                            className={`w-full border rounded-lg p-5 bg-white ${camposConError.includes("objetivo")
+                                ? "border-red-500"
+                                : "border-gray-300"
+                                }`}
                         />
                     </div>
 
@@ -208,7 +237,11 @@ export default function EditarOportunidadDialog({
                         <InputText
                             value={formData.socio}
                             onChange={(e) => handleChange("socio", e.target.value)}
-                            className="w-full border border-gray-300 rounded-md p-2 bg-white"
+                            className={`w-full border rounded-md p-3 bg-white ${camposConError.includes("socio")
+                                ? "border-red-500"
+                                : "border-gray-300"
+                                }`
+                            }
                         />
                         <p className="text-xs font-semibold mt-2 text-gray-700">
                             *Por favor escriba el nombre completo, no siglas.
@@ -300,11 +333,20 @@ export default function EditarOportunidadDialog({
                         <InputText
                             value={formData.direccion_envio}
                             onChange={(e) => handleChange("direccion_envio", e.target.value)}
-                            className="w-full border border-gray-300 rounded-md p-2 bg-white"
+                            className="w-full border border-gray-300 rounded-md p-3 bg-white"
                         />
                         <p className="text-xs font-semibold mt-2 text-gray-700">
-                            *Por favor escriba el nombre directo de la dirección.
-                            *En caso de ser más de uno, sepárelos con una coma.
+                            * En caso de ser más de uno, sepárelos con una coma. <br />
+                            * Favor poner el nombre completo de la dirección. En caso de no saberlo,
+                            puede consultarlo en el siguiente{" "}
+                            <a
+                                href="https://www.mep.go.cr/sites/default/files/2025-05/Organigrama.pdf"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-blue-600 underline hover:text-blue-800 transition"
+                            >
+                                enlace
+                            </a>.
                         </p>
                     </div>
 
@@ -316,7 +358,10 @@ export default function EditarOportunidadDialog({
                             onChange={(e) => handleChange("fecha_inicio", e.value)}
                             showIcon
                             dateFormat="dd/mm/yy"
-                            className="w-full border border-gray-300 rounded-md p-2 bg-white"
+                            className={`w-full border rounded-md p-3 bg-white ${camposConError.includes("fecha_inicio")
+                                ? "border-red-500"
+                                : "border-gray-300"
+                                }`}
                         />
                     </div>
 
@@ -327,7 +372,7 @@ export default function EditarOportunidadDialog({
                             onChange={(e) => handleChange("fecha_fin", e.value)}
                             showIcon
                             dateFormat="dd/mm/yy"
-                            className="w-full border border-gray-300 rounded-md p-2 bg-white"
+                            className="w-full border border-gray-300 rounded-md p-3 bg-white"
                         />
                     </div>
 
@@ -336,7 +381,7 @@ export default function EditarOportunidadDialog({
                         <InputText
                             value={formData.funcionario}
                             onChange={(e) => handleChange("funcionario", e.target.value)}
-                            className="w-full border border-gray-300 rounded-md p-2 bg-white"
+                            className="w-full border border-gray-300 rounded-md p-3 bg-white"
                         />
                     </div>
                 </div>
