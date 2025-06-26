@@ -122,7 +122,7 @@ export async function DELETE(req: NextRequest) {
       return NextResponse.json({ error: "Registro no encontrado" }, { status: 404 });
     }
 
-    // Eliminar el registro
+    // Elimina el registro
     await query("DELETE FROM oportunidades WHERE id = ?", [id]);
 
     return NextResponse.json({ message: "Oportunidad eliminada correctamente" }, { status: 200 });
@@ -131,5 +131,3 @@ export async function DELETE(req: NextRequest) {
     return NextResponse.json({ error: "Error al eliminar la oportunidad" }, { status: 500 });
   }
 }
-
-

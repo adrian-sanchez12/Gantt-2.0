@@ -71,6 +71,19 @@ export default function OportunidadesTable() {
   //Manejo borrar pdf
   const handleDeletePDF = async (rowData: any) => {
     try {
+      const fileUrl = rowData.doc_pdf;
+      const fileName = fileUrl?.split("/").pop();
+
+      // Elimina el archivo de uploads
+      if (fileName) {
+        await fetch("/api/delete_file", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ fileName }),
+        });
+      }
+
+      // Elimina la referencia en la db
       await fetch("/api/oportunidades", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
@@ -90,7 +103,7 @@ export default function OportunidadesTable() {
   //FIN MANEJO PDF
 
 
-  //sirve para que se muestre un dialogo de confirmacion antes 
+  //sirve para que se muestre un dialogo de confirmacion antes de
   //eliminar una oportunidad
   const confirmarEliminacion = (id: number) => {
     setSelectedId(id);
@@ -213,7 +226,7 @@ export default function OportunidadesTable() {
         acceptClassName="p-button-danger"
         rejectClassName="p-button-text"
         className="w-[90vw] md:w-[30rem]"
-        footer={(  // 👇 Personalización para separar botones
+        footer={(
           <div className="flex justify-end gap-3">
             <Button label="No" icon="pi pi-times" onClick={reject} className="p-button-text" />
             <Button label="Sí" icon="pi pi-check" onClick={accept} className="p-button-danger" />
@@ -243,6 +256,8 @@ export default function OportunidadesTable() {
         />
       </div>
 
+      <h2 className="text-xl font-bold text-gray-800 mb-4 mt-8 text-center">Lista de oportunidades profesionales</h2>
+      <div className="h-4" />
       <DataTable
         value={oportunidades}
         expandedRows={expandedRows}
@@ -252,7 +267,7 @@ export default function OportunidadesTable() {
         paginator
         rows={10}
         filters={{ global: { value: globalFilter, matchMode: FilterMatchMode.CONTAINS } }}
-        globalFilterFields={["nombre_oportunidad", "socio", "modalidad"]} //hablar sobre que partes
+        globalFilterFields={["nombre_oportunidad", "socio", "modalidad"]}
         className="text-sm border border-gray-200 rounded-lg shadow-sm"
         responsiveLayout="scroll"
       >

@@ -161,7 +161,7 @@ export default function OportunidadesPorSocio() {
         </div>
       </div>
 
-      <div className="w-full mb-6" style={{ height: '800px', overflow: "scroll" }}>
+      <div className="w-full mb-6" style={{ height: '900px', overflow: "scroll" }}>
         <Chart type="bar" data={barChartData} options={chartOptions} />
       </div>
 
