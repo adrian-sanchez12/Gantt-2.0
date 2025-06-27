@@ -84,8 +84,36 @@ export default function EditarOportunidadDialog({
     const [formData, setFormData] = useState<any>(registro);
 
     useEffect(() => {
-        setFormData(registro);
-    }, [registro]);
+    if (registro) {
+        const nuevoFormData = { ...registro };
+
+        const opcionesTipo = tiposOportunidad.map(o => o.value);
+        if (registro.tipo_oportunidad && !opcionesTipo.includes(registro.tipo_oportunidad)) {
+            nuevoFormData.tipo_oportunidad = "Otro";
+            nuevoFormData.otroTipo = registro.tipo_oportunidad;
+        }
+
+        const opcionesSector = sectores.map(o => o.value);
+        if (registro.sector && !opcionesSector.includes(registro.sector)) {
+            nuevoFormData.sector = "Otro";
+            nuevoFormData.otroSector = registro.sector;
+        }
+
+        const opcionesTema = temas.map(o => o.value);
+        if (registro.tema && !opcionesTema.includes(registro.tema)) {
+            nuevoFormData.tema = "Otro";
+            nuevoFormData.otroTema = registro.tema;
+        }
+
+        const opcionesPoblacion = poblaciones.map(o => o.value);
+        if (registro.poblacion_meta && !opcionesPoblacion.includes(registro.poblacion_meta)) {
+            nuevoFormData.poblacion_meta = "Otro";
+            nuevoFormData.otraPoblacion = registro.poblacion_meta;
+        }
+
+        setFormData(nuevoFormData);
+    }
+}, [registro]);
 
     //Mensaje de error de información faltante
     const [errorMensaje, setErrorMensaje] = useState<string | null>(null);
@@ -218,7 +246,7 @@ export default function EditarOportunidadDialog({
                         <Dropdown
                             value={formData.tipo_oportunidad}
                             options={tiposOportunidad}
-                            onChange={(e) => setFormData({ ...formData, tipo_oportunidad: e.value, otroTipo: e.value === "Otro" ? "" : "" })}
+                            onChange={(e) => setFormData({ ...formData, tipo_oportunidad: e.value })}
                             placeholder="Seleccione el tipo"
                             className="w-full border border-gray-300 rounded-md py-0 px-2 bg-white text-sm"
                         />
@@ -253,7 +281,7 @@ export default function EditarOportunidadDialog({
                         <Dropdown
                             value={formData.sector}
                             options={sectores}
-                            onChange={(e) => setFormData({ ...formData, sector: e.value, otroSector: e.value === "Otro" ? "" : "" })}
+                            onChange={(e) => setFormData({ ...formData, sector: e.value })}
                             placeholder="Seleccione el sector"
                             className="w-full border border-gray-300 rounded-md py-0 px-2 bg-white text-sm"
                         />
@@ -272,7 +300,7 @@ export default function EditarOportunidadDialog({
                         <Dropdown
                             value={formData.tema}
                             options={temas}
-                            onChange={(e) => setFormData({ ...formData, tema: e.value, otroTema: e.value === "Otro" ? "" : "" })}
+                            onChange={(e) => setFormData({ ...formData, tema: e.value })}
                             placeholder="Seleccione el tema"
                             className="w-full border border-gray-300 rounded-md py-0 px-2 bg-white text-sm"
                         />
@@ -291,7 +319,7 @@ export default function EditarOportunidadDialog({
                         <Dropdown
                             value={formData.poblacion_meta}
                             options={poblaciones}
-                            onChange={(e) => setFormData({ ...formData, poblacion_meta: e.value, otraPoblacion: e.value === "Otro" ? "" : "" })}
+                            onChange={(e) => setFormData({ ...formData, poblacion_meta: e.value })}
                             placeholder="Seleccione la población meta"
                             className="w-full border border-gray-300 rounded-md py-0 px-2 bg-white text-sm"
                         />
@@ -310,7 +338,7 @@ export default function EditarOportunidadDialog({
                         <Dropdown
                             value={formData.despacho}
                             options={despachos}
-                            onChange={(e) => setFormData({ ...formData, despacho: e.value, otroDespacho: e.value === "Interdisciplinario" ? "" : "" })}
+                            onChange={(e) => setFormData({ ...formData, despacho: e.value })}
                             placeholder="Seleccione el despacho"
                             className="w-full border border-gray-300 rounded-md py-0 px-2 bg-white text-sm"
                         />
