@@ -6,6 +6,7 @@ import { Button } from "primereact/button";
 import { Toast } from "primereact/toast";
 import { ConfirmDialog, confirmDialog } from "primereact/confirmdialog";
 import { FaCheckCircle, FaExclamationCircle, FaHourglassHalf, FaFileAlt, FaTrash } from "react-icons/fa"; 
+import { API_BASE } from "@/utils/api";
 
 interface TimelineModalProps {
   visible: boolean;
@@ -32,9 +33,8 @@ export default function TimelineModal({
         console.warn(" No hay registroProcesoId, consulta cancelada.");
         return;
       }
-
       try {
-        const response = await fetch(`/api/historial_registro_procesos?registro_proceso_id=${registroProcesoId}`);
+        const response = await fetch(`${API_BASE}historial_registro_procesos/?registro_proceso_id=${registroProcesoId}`);
         if (!response.ok) throw new Error("Error obteniendo eventos");
 
         const data = await response.json();
@@ -68,7 +68,7 @@ export default function TimelineModal({
 
     setLoading(true);
     try {
-      const response = await fetch("/api/historial_registro_procesos", {
+      const response = await fetch(`${API_BASE}historial_registro_procesos/`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -113,7 +113,7 @@ export default function TimelineModal({
 
   const handleDeleteEvento = async (id: number) => {
     try {
-      const response = await fetch(`/api/historial_registro_procesos?id=${id}`, { method: "DELETE" });
+      const response = await fetch(`${API_BASE}historial_registro_procesos/?id=${id}`, { method: "DELETE" });
       if (!response.ok) throw new Error("Error al eliminar el evento");
 
       toast.current?.show({

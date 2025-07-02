@@ -18,10 +18,10 @@ export default function Sidebar() {
       showCloseIcon={false} // 🔹 Quita el botón de cierre de arriba
       className="w-64 h-screen bg-white text-gray-900 border-r shadow-lg p-2 transition-transform duration-300"
     >
-      {/*  Imagen favicon centrada */}
+      {/* Imagen favicon centrada */}
       <div className="flex justify-center mb-4">
         <Image
-          src="/favicon.png" 
+          src="/favicon.png"
           alt="Logo"
           width={75}  
           height={75}
@@ -29,31 +29,29 @@ export default function Sidebar() {
         />
       </div>
 
-      {/*  Título del Sidebar */}
+      {/* Título del Sidebar */}
       <h2 className="text-lg font-bold text-gray-800 mb-6 text-center">Menú Principal</h2>
 
       <ul className="space-y-4">
-        {/* Botón de Inicio */}
         <li>
           <Button
             label="Inicio"
             icon="pi pi-home"
             className="w-full flex items-center justify-start bg-gray-100 text-gray-700 hover:bg-[#CDA95F] hover:text-white transition-all duration-300 p-3 rounded-lg"
             onClick={() => {
-              router.push("/");
+              router.push("/dashboard");
               setSidebarVisible(false);
             }}
           />
         </li>
 
-        {/* Botón para Ver Convenios */}
         <li>
           <Button
             label="Ver Convenios"
             icon="pi pi-list"
             className="w-full flex items-center justify-start bg-gray-100 text-gray-700 hover:bg-[#CDA95F] hover:text-white transition-all duration-300 p-3 rounded-lg"
             onClick={() => {
-              router.push("/convenios");
+              router.push("/dashboard/convenios");
               setSidebarVisible(false);
             }}
           />
@@ -65,20 +63,19 @@ export default function Sidebar() {
             icon="pi pi-folder"
             className="w-full flex items-center justify-start bg-gray-100 text-gray-700 hover:bg-[#CDA95F] hover:text-white transition-all duration-300 p-3 rounded-lg"
             onClick={() => {
-              router.push("/inventario");
+              router.push("/dashboard/inventario");
               setSidebarVisible(false);
             }}
           />
         </li>
 
-        {/* Botón para Ver Estadísticas */}
         <li>
           <Button
             label="Ver Estadísticas"
             icon="pi pi-chart-bar"
             className="w-full flex items-center justify-start bg-gray-100 text-gray-700 hover:bg-[#CDA95F] hover:text-white transition-all duration-300 p-3 rounded-lg"
             onClick={() => {
-              router.push("/estadistica");
+              router.push("/dashboard/estadistica");
               setSidebarVisible(false);
             }}
           />
@@ -126,8 +123,6 @@ export default function Sidebar() {
           )}
         </li>
       </ul>
-
-     
     </PrimeSidebar>
   );
 }

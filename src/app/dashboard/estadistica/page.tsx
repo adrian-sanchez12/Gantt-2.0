@@ -1,7 +1,6 @@
 "use client";
 import { TabView, TabPanel } from "primereact/tabview";
-import Estadistica2 from "../components/Estadisticas2";
-import Estadistica3 from "../components/Estadisticas3";
+import Estadistica2 from "@/app/components/Estadisticas2";
 import { useState } from "react";
 
 export default function EstadisticaPage() {

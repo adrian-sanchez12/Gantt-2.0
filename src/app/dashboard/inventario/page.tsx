@@ -1,4 +1,4 @@
-import  Inventario  from "../components/Inventario";
+import Inventario from '@/app/components//Inventario';
 
 export default function InventarioPage() {
   return (

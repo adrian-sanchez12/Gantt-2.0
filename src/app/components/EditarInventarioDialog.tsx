@@ -6,6 +6,7 @@ import { InputTextarea } from "primereact/inputtextarea";
 import { Calendar } from "primereact/calendar";
 import { Button } from "primereact/button";
 import { useState, useEffect } from "react";
+import { API_BASE } from "@/utils/api";
 
 interface EditarInventarioDialogProps {
   visible: boolean;
@@ -23,7 +24,7 @@ export default function EditarInventarioDialog({
   const [formData, setFormData] = useState<any>(registro);
 
   useEffect(() => {
-    setFormData(registro);
+    if (registro) setFormData(registro);
   }, [registro]);
 
   const handleChange = (field: string, value: any) => {
@@ -44,7 +45,7 @@ export default function EditarInventarioDialog({
         fecha_vencimiento: formatDate(formData.fecha_vencimiento),
       };
 
-      const response = await fetch("/api/inventario", {
+      const response = await fetch(`${API_BASE}inventario/`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
@@ -85,86 +86,118 @@ export default function EditarInventarioDialog({
       }
     >
       {formData && (
-        <div className="grid grid-cols-2 gap-6 text-sm mt-2">
-          <div className="col-span-2">
-            <label className="block text-gray-700 font-semibold mb-1 uppercase">Nombre del Convenio</label>
-            <InputText
-              value={formData.nombre_convenio || ""}
-              onChange={(e) => handleChange("nombre_convenio", e.target.value)}
-              className="w-full border border-gray-400 rounded-md p-2 shadow-sm bg-white"
-            />
-          </div>
+       <div className="grid grid-cols-2 gap-6 text-sm mt-2">
+       {/* Cooperante */}
 
-          <div className="col-span-2">
-            <label className="block text-gray-700 font-semibold mb-1 uppercase">Objeto del Convenio</label>
-            <InputTextarea
-              value={formData.objeto_convenio || ""}
-              onChange={(e) => handleChange("objeto_convenio", e.target.value)}
-              rows={4}
-              className="w-full border border-gray-400 rounded-md p-2 shadow-sm bg-white"
-            />
-          </div>
-
-          <div>
-            <label className="block text-gray-700 font-semibold mb-1 uppercase">Tipo de Instrumento</label>
-            <InputText
-              value={formData.tipo_instrumento || ""}
-              onChange={(e) => handleChange("tipo_instrumento", e.target.value)}
-              className="w-full border border-gray-400 rounded-md p-2 shadow-sm bg-white"
-            />
-          </div>
-
-          <div>
-            <label className="block text-gray-700 font-semibold mb-1 uppercase">Presupuesto</label>
-            <InputText
-              value={formData.presupuesto || ""}
-              onChange={(e) => handleChange("presupuesto", e.target.value)}
-              className="w-full border border-gray-400 rounded-md p-2 shadow-sm bg-white"
-            />
-          </div>
-
-          <div>
-            <label className="block text-gray-700 font-semibold mb-1 uppercase">Fecha Rige</label>
-            <Calendar
-              value={formData.fecha_rige ? new Date(formData.fecha_rige) : undefined}
-              onChange={(e) => handleChange("fecha_rige", e.value)}
-              dateFormat="yy-mm-dd"
-              showIcon
-              className="w-full border border-gray-400 rounded-md p-2 shadow-sm bg-white"
-            />
-          </div>
-
-          <div>
-            <label className="block text-gray-700 font-semibold mb-1 uppercase">Fecha Vencimiento</label>
-            <Calendar
-              value={formData.fecha_vencimiento ? new Date(formData.fecha_vencimiento) : undefined}
-              onChange={(e) => handleChange("fecha_vencimiento", e.value)}
-              dateFormat="yy-mm-dd"
-              showIcon
-              className="w-full border border-gray-400 rounded-md p-2 shadow-sm bg-white"
-            />
-          </div>
-
-          <div className="col-span-2">
-            <label className="block text-gray-700 font-semibold mb-1 uppercase">Instancias Técnicas</label>
-            <InputTextarea
-              value={formData.instancias_tecnicas || ""}
-              onChange={(e) => handleChange("instancias_tecnicas", e.target.value)}
-              rows={3}
-              className="w-full border border-gray-400 rounded-md p-2 shadow-sm bg-white"
-            />
-          </div>
-
-          <div className="col-span-2">
-            <label className="block text-gray-700 font-semibold mb-1 uppercase">Informe</label>
-            <InputTextarea
-              value={formData.informe || ""}
-              onChange={(e) => handleChange("informe", e.target.value)}
-              rows={3}
-              className="w-full border border-gray-400 rounded-md p-2 shadow-sm bg-white"
-            />
-          </div>
-        </div>
+        <div>
+         <label className="block text-gray-700 font-semibold mb-1 uppercase">Cooperante</label>
+         <InputText
+           value={formData.cooperante || ""}
+           onChange={(e) => handleChange("cooperante", e.target.value)}
+           className="w-full border border-gray-400 rounded-md p-2 shadow-sm bg-white"
+         />
+       </div>
+     
+       {/* Contraparte Externa */}
+       <div>
+         <label className="block text-gray-700 font-semibold mb-1 uppercase">Contraparte Externa</label>
+         <InputText
+           value={formData.contraparte_externa || ""}
+           onChange={(e) => handleChange("contraparte_externa", e.target.value)}
+           className="w-full border border-gray-400 rounded-md p-2 shadow-sm bg-white"
+         />
+       </div>
+       {/* Nombre del Convenio */}
+       <div className="col-span-2">
+         <label className="block text-gray-700 font-semibold mb-1 uppercase">Nombre del Convenio</label>
+         <InputText
+           value={formData.nombre_convenio || ""}
+           onChange={(e) => handleChange("nombre_convenio", e.target.value)}
+           className="w-full border border-gray-400 rounded-md p-2 shadow-sm bg-white"
+         />
+       </div>
+     
+       {/* Objeto */}
+       <div className="col-span-2">
+         <label className="block text-gray-700 font-semibold mb-1 uppercase">Objeto del Convenio</label>
+         <InputTextarea
+           value={formData.objeto_convenio || ""}
+           onChange={(e) => handleChange("objeto_convenio", e.target.value)}
+           rows={4}
+           className="w-full border border-gray-400 rounded-md p-2 shadow-sm bg-white"
+         />
+       </div>
+     
+       {/* Tipo de instrumento */}
+       <div>
+         <label className="block text-gray-700 font-semibold mb-1 uppercase">Tipo de Instrumento</label>
+         <InputText
+           value={formData.tipo_instrumento || ""}
+           onChange={(e) => handleChange("tipo_instrumento", e.target.value)}
+           className="w-full border border-gray-400 rounded-md p-2 shadow-sm bg-white"
+         />
+       </div>
+     
+       {/* Presupuesto */}
+       <div>
+         <label className="block text-gray-700 font-semibold mb-1 uppercase">Presupuesto</label>
+         <InputText
+           type="number"
+           value={formData.presupuesto || ""}
+           onChange={(e) => handleChange("presupuesto", e.target.value)}
+           className="w-full border border-gray-400 rounded-md p-2 shadow-sm bg-white"
+         />
+       </div>
+     
+       {/* Fecha Rige */}
+       <div>
+         <label className="block text-gray-700 font-semibold mb-1 uppercase">Fecha Rige</label>
+         <Calendar
+           value={formData.fecha_rige ? new Date(formData.fecha_rige) : undefined}
+           onChange={(e) => handleChange("fecha_rige", e.value)}
+           dateFormat="yy-mm-dd"
+           showIcon
+           className="w-full border border-gray-400 rounded-md p-2 shadow-sm bg-white"
+         />
+       </div>
+     
+       {/* Fecha Vencimiento */}
+       <div>
+         <label className="block text-gray-700 font-semibold mb-1 uppercase">Fecha Vencimiento</label>
+         <Calendar
+           value={formData.fecha_vencimiento ? new Date(formData.fecha_vencimiento) : undefined}
+           onChange={(e) => handleChange("fecha_vencimiento", e.value)}
+           dateFormat="yy-mm-dd"
+           showIcon
+           className="w-full border border-gray-400 rounded-md p-2 shadow-sm bg-white"
+         />
+       </div>
+     
+       {/* Instancias Técnicas */}
+       <div className="col-span-2">
+         <label className="block text-gray-700 font-semibold mb-1 uppercase">Instancias Técnicas</label>
+         <InputTextarea
+           value={formData.instancias_tecnicas || ""}
+           onChange={(e) => handleChange("instancias_tecnicas", e.target.value)}
+           rows={3}
+           className="w-full border border-gray-400 rounded-md p-2 shadow-sm bg-white"
+         />
+       </div>
+     
+       {/* Informe */}
+       <div className="col-span-2">
+         <label className="block text-gray-700 font-semibold mb-1 uppercase">Informe</label>
+         <InputTextarea
+           value={formData.informe || ""}
+           onChange={(e) => handleChange("informe", e.target.value)}
+           rows={3}
+           className="w-full border border-gray-400 rounded-md p-2 shadow-sm bg-white"
+         />
+       </div>
+     
+       
+     </div>
+     
       )}
     </Dialog>
   );

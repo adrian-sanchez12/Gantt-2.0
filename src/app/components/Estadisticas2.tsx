@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { Chart } from "primereact/chart";
 import { Accordion, AccordionTab } from "primereact/accordion";
+import { API_BASE } from "@/utils/api";
 
 const fases = [
   { nombre: "Negociación", color: "#3B82F6" }, // Azul
@@ -19,7 +20,7 @@ export default function Estadistica2() {
   useEffect(() => {
     async function fetchData() {
       try {
-        const response = await fetch("/api/convenios"); 
+        const response = await fetch(`${API_BASE}convenios/`); 
         if (!response.ok) throw new Error("Error obteniendo convenios");
 
         const data = await response.json();
