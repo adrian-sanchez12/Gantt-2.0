@@ -6,6 +6,7 @@ import { Calendar } from "primereact/calendar";
 import { Button } from "primereact/button";
 import { Dropdown } from "primereact/dropdown";
 import { useState } from "react";
+import { API_BASE } from "@/utils/api";
 
 interface AgregarOportunidadDialogProps {
   visible: boolean;
@@ -139,7 +140,7 @@ export default function AgregarOportunidadDialog({ visible, onHide, onSave }: Ag
       setCamposConError([]);
       setErrorMensaje(null);
 
-      const response = await fetch("/api/oportunidades", {
+       const response = await fetch(`${API_BASE}oportunidades/`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),

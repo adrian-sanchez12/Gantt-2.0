@@ -104,7 +104,7 @@ export default function Sidebar() {
                   label="Datos"
                   className="w-full justify-start bg-gray-100 text-gray-700 hover:bg-[#CDA95F] hover:text-white transition-all duration-300 p-2 rounded-md"
                   onClick={() => {
-                    router.push("/oportunidades");
+                    router.push("/dashboard/oportunidades");
                     setSidebarVisible(false);
                   }}
                 />
@@ -114,7 +114,7 @@ export default function Sidebar() {
                   label="Gráficas"
                   className="w-full justify-start bg-gray-100 text-gray-700 hover:bg-[#CDA95F] hover:text-white transition-all duration-300 p-2 rounded-md"
                   onClick={() => {
-                    router.push("/graficasOport");
+                    router.push("/dashboard/graficasOport");
                     setSidebarVisible(false);
                   }}
                 />

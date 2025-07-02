@@ -1,11 +1,11 @@
 "use client";
 import { useState } from "react";
 import { TabView, TabPanel } from "primereact/tabview";
-import GraficoViceministerio from "../components/Graficos/GraficoViceministerio";
-import GraficoTemas from "../components/Graficos/GraficoTemas";
-import GraficoSectores from "../components/Graficos/GraficoSectores";
-import GraficoSocios from "../components/Graficos/GraficoSocios";
-import GraficoPoblaciones from "../components/Graficos/GraficoPoblaciones";
+import GraficoViceministerio from '@/app/components/Graficos/GraficoViceministerio';
+import GraficoTemas from '@/app/components/Graficos/GraficoTemas';
+import GraficoSectores from '@/app/components/Graficos/GraficoSectores';
+import GraficoSocios from '@/app/components/Graficos/GraficoSocios';
+import GraficoPoblaciones from '@/app/components/Graficos/GraficoPoblaciones';
 
 export default function ReportesOportPage() {
   const [activeIndex, setActiveIndex] = useState(0);

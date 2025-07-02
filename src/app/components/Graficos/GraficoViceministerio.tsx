@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Chart } from "primereact/chart";
 import { Accordion, AccordionTab } from "primereact/accordion";
 import { Dropdown } from "primereact/dropdown";
+import { API_BASE } from "@/utils/api";
 
 interface Oportunidad {
   despacho: string;
@@ -18,7 +19,7 @@ export default function GraficoViceministerio() {
   useEffect(() => {
     async function fetchData() {
       try {
-        const response = await fetch("/api/oportunidades");
+        const response = await fetch(`${API_BASE}oportunidades/`);
         if (!response.ok) throw new Error("Error obteniendo oportunidades");
 
         const data = await response.json();

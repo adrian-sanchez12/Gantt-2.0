@@ -5,6 +5,7 @@ import { Chart } from "primereact/chart";
 import { Dropdown } from "primereact/dropdown";
 import { Accordion, AccordionTab } from "primereact/accordion";
 import ChartDataLabels from "chartjs-plugin-datalabels";
+import { API_BASE } from "@/utils/api";
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from "chart.js";
 ChartJS.register(ArcElement, Tooltip, Legend, ChartDataLabels);
 
@@ -54,7 +55,7 @@ export default function GraficoTemas() {
   useEffect(() => {
     async function fetchData() {
       try {
-        const response = await fetch("/api/oportunidades");
+        const response = await fetch(`${API_BASE}oportunidades/`);
         if (!response.ok) throw new Error("Error obteniendo oportunidades");
         const data = await response.json();
         setOportunidades(data);

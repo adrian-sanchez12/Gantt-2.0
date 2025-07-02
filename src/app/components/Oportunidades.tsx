@@ -10,6 +10,7 @@ import { Toast } from "primereact/toast";
 import { ConfirmDialog } from "primereact/confirmdialog";
 import AgregarOportunidadDialog from "./AgregarOportunidadDialog";
 import EditarOportunidadDialog from "./EditarOportunidadDialog";
+import { API_BASE, FILE_BASE } from "@/utils/api";
 
 export default function OportunidadesTable() {
   const [oportunidades, setOportunidades] = useState([]);
@@ -27,7 +28,7 @@ export default function OportunidadesTable() {
 
   const fetchOportunidades = async () => {
     try {
-      const response = await fetch("/api/oportunidades");
+      const response = await fetch(`${API_BASE}oportunidades/`);
       const data = await response.json();
       setOportunidades(data || []);
     } catch (error) {
@@ -47,7 +48,7 @@ export default function OportunidadesTable() {
     formData.append("file", file);
     formData.append("id", rowData.id);
 
-    const response = await fetch("/api/upload", {
+    const response = await fetch(`${API_BASE}upload/`, {
       method: "POST",
       body: formData,
     });
@@ -59,7 +60,7 @@ export default function OportunidadesTable() {
 
     const { url } = await response.json();
 
-    await fetch("/api/oportunidades", {
+    await fetch(`${API_BASE}oportunidades/`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ id: rowData.id, doc_pdf: url }),
@@ -84,7 +85,7 @@ export default function OportunidadesTable() {
       }
 
       // Elimina la referencia en la db
-      await fetch("/api/oportunidades", {
+      await fetch(`${API_BASE}oportunidades/`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id: rowData.id, doc_pdf: "" }),
@@ -114,7 +115,7 @@ export default function OportunidadesTable() {
     if (selectedId === null) return;
 
     try {
-      const response = await fetch(`/api/oportunidades?id=${selectedId}`, { method: "DELETE" });
+      const response = await fetch(`${API_BASE}oportunidades/?id=${selectedId}`, { method: "DELETE" });
       if (!response.ok) throw new Error("Error al eliminar la oportunidad");
 
       toast.current?.show({

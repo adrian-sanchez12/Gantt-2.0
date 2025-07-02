@@ -6,6 +6,7 @@ import { Calendar } from "primereact/calendar";
 import { Button } from "primereact/button";
 import { Dropdown } from "primereact/dropdown";
 import { useState, useEffect } from "react";
+import { API_BASE } from "@/utils/api";
 
 interface EditarOportunidadDialogProps {
     visible: boolean;
@@ -163,7 +164,7 @@ export default function EditarOportunidadDialog({
             setCamposConError([]);
             setErrorMensaje(null);
 
-            const response = await fetch("/api/oportunidades", {
+            const response = await fetch(`${API_BASE}oportunidades/`, {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(payload),
