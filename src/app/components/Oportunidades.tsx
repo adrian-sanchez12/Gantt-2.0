@@ -77,7 +77,7 @@ export default function OportunidadesTable() {
 
       // Elimina el archivo de uploads
       if (fileName) {
-        await fetch("/api/delete_file", {
+        await fetch(`${API_BASE}delete_file/`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ fileName }),
