@@ -76,17 +76,37 @@ export default function GraficoPoblacion() {
     )
   ).sort();
 
-    //Filtra por año
+  //Filtra por año
   const oportunidadesFiltradas = anioSeleccionado
     ? oportunidades.filter((o) => o.fecha_inicio?.startsWith(anioSeleccionado))
     : oportunidades;
 
+  const POBLACIONES_VALIDAS = [
+    "Estudiantes",
+    "Docentes",
+    "Asesores",
+    "Comunidad estudiantil",
+    "Autoridades MEP",
+    "Directores MEP"
+  ]
+
   const agrupado: Record<string, Oportunidad[]> = {};
   oportunidadesFiltradas.forEach((o) => {
-    const poblacion = o.poblacion_meta?.trim() || "Sin población";
-    if (!agrupado[poblacion]) agrupado[poblacion] = [];
-    agrupado[poblacion].push(o);
+    const original = o.poblacion_meta?.trim() || "";
+
+    const esMultiple = original.includes(",");
+    const esValido = POBLACIONES_VALIDAS.includes(original);
+    const categoriaAgrupada =
+      !original
+        ? "Sin población"
+        : esMultiple || !esValido
+          ? "Interdisciplinario"
+          : original;
+
+    if (!agrupado[categoriaAgrupada]) agrupado[categoriaAgrupada] = [];
+    agrupado[categoriaAgrupada].push(o);
   });
+
 
   const labels = Object.keys(agrupado);
   const valores = labels.map((p) => agrupado[p].length);

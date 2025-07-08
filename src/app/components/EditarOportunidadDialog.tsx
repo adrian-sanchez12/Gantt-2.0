@@ -37,7 +37,6 @@ const sectores = [
     { label: "Academia", value: " Academia" },
     { label: "Público", value: "Público" },
     { label: "Privado", value: "Privado" },
-    { label: "Otro (escribir)", value: "Otro" },
 ];
 
 const temas = [
@@ -94,12 +93,6 @@ export default function EditarOportunidadDialog({
             nuevoFormData.otroTipo = registro.tipo_oportunidad;
         }
 
-        const opcionesSector = sectores.map(o => o.value);
-        if (registro.sector && !opcionesSector.includes(registro.sector)) {
-            nuevoFormData.sector = "Otro";
-            nuevoFormData.otroSector = registro.sector;
-        }
-
         const opcionesTema = temas.map(o => o.value);
         if (registro.tema && !opcionesTema.includes(registro.tema)) {
             nuevoFormData.tema = "Otro";
@@ -136,8 +129,6 @@ export default function EditarOportunidadDialog({
                 //Lo mismo que el agregar, permite que lo que se escriba en otro se agregue directo a la base de datos
                 tipo_oportunidad:
                     formData.tipo_oportunidad === "Otro" ? formData.otroTipo : formData.tipo_oportunidad,
-                sector:
-                    formData.sector === "Otro" ? formData.otroSector : formData.sector,
                 tema:
                     formData.tema === "Otro" ? formData.otroTema : formData.tema,
                 poblacion_meta:
@@ -286,14 +277,6 @@ export default function EditarOportunidadDialog({
                             placeholder="Seleccione el sector"
                             className="w-full border border-gray-300 rounded-md py-0 px-2 bg-white text-sm"
                         />
-                        {formData.sector === "Otro" && (
-                            <InputText
-                                value={formData.otroSector}
-                                onChange={(e) => setFormData({ ...formData, otroSector: e.target.value })}
-                                placeholder="Escriba el sector"
-                                className="w-full mt-2"
-                            />
-                        )}
                     </div>
 
                     <div>

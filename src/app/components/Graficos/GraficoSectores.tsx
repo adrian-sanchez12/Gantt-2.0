@@ -46,7 +46,7 @@ export default function SociosPorSector() {
   const oportunidadesFiltradas = anioSeleccionado
     ? oportunidades.filter((o) => o.fecha_inicio?.startsWith(anioSeleccionado))
     : oportunidades;
-
+  
   // Agrupa socios por sector
   const agrupado: Record<string, string[]> = {};
   sectores.forEach((s) => (agrupado[s.nombre] = []));
