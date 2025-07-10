@@ -5,6 +5,7 @@ import { InputText } from "primereact/inputtext";
 import { Calendar } from "primereact/calendar";
 import { Button } from "primereact/button";
 import { Dropdown } from "primereact/dropdown";
+import { MultiSelect } from "primereact/multiselect";
 import { useState, useEffect } from "react";
 import { API_BASE } from "@/utils/api";
 
@@ -68,7 +69,7 @@ const despachos = [
 const poblaciones = [
     { label: "Estudiantes", value: "Estudiantes" },
     { label: "Docentes", value: "Docentes" },
-    { label: "Asesores", value: " Asesores" },
+    { label: "Asesores", value: "Asesores" },
     { label: "Comunidad estudiantil", value: "Comunidad estudiantil" },
     { label: "Autoridades MEP", value: "Autoridades MEP" },
     { label: "Directores MEP", value: "Directores MEP" },
@@ -396,6 +397,16 @@ export default function EditarOportunidadDialog({
                             className="w-full border border-gray-300 rounded-md p-3 bg-white"
                         />
                     </div>
+
+                    <div className="col-span-2">
+                        <label className="font-semibold">Observaciones importantes</label>
+                        <InputText
+                            value={formData.observaciones}
+                            onChange={(e) => handleChange("observaciones", e.target.value)}
+                            className="w-full border border-gray-300 rounded-md p-5 bg-white"
+                        />
+                    </div>
+
                 </div>
             )}
         </Dialog>

@@ -5,6 +5,7 @@ import { InputText } from "primereact/inputtext";
 import { Calendar } from "primereact/calendar";
 import { Button } from "primereact/button";
 import { Dropdown } from "primereact/dropdown";
+import { MultiSelect } from "primereact/multiselect";
 import { useState } from "react";
 import { API_BASE } from "@/utils/api";
 
@@ -71,7 +72,7 @@ const poblaciones = [
   { label: "Comunidad estudiantil", value: "Comunidad estudiantil" },
   { label: "Autoridades MEP", value: "Autoridades MEP" },
   { label: "Directores MEP", value: "Directores MEP" },
-  { label: "Varios (escribir)", value: "Otro" },
+  { label: "Otro (escribir)", value: "Otro" },
 ];
 
 //Los que dicen otros se necesitan para los dropdowns que contienen "Otro" como opción
@@ -86,7 +87,7 @@ export default function AgregarOportunidadDialog({ visible, onHide, onSave }: Ag
     sector: "",
     tema: "",
     otroTema: "",
-    poblacion_meta: "",
+    poblacion_meta: [] as string[],
     otraPoblacion: "",
     despacho: "",
     otroDespacho: "",
@@ -94,6 +95,7 @@ export default function AgregarOportunidadDialog({ visible, onHide, onSave }: Ag
     fecha_inicio: null,
     fecha_fin: null,
     funcionario: "",
+    observaciones: "",
   });
 
   //Mensaje de error de información faltante
@@ -119,7 +121,9 @@ export default function AgregarOportunidadDialog({ visible, onHide, onSave }: Ag
         despacho:
           formData.despacho === "Interdisciplinario" ? formData.otroDespacho : formData.despacho,
         poblacion_meta:
-          formData.poblacion_meta === "Otro" ? formData.otraPoblacion : formData.poblacion_meta,
+          formData.poblacion_meta.includes("Otro")
+            ? [...formData.poblacion_meta.filter(p => p !== "Otro"), formData.otraPoblacion].join(", ")
+            : formData.poblacion_meta.join(", "),
         fecha_inicio: formatDate(formData.fecha_inicio),
         fecha_fin: formatDate(formData.fecha_fin),
       };
@@ -140,7 +144,7 @@ export default function AgregarOportunidadDialog({ visible, onHide, onSave }: Ag
       setCamposConError([]);
       setErrorMensaje(null);
 
-       const response = await fetch(`${API_BASE}oportunidades/`, {
+      const response = await fetch(`${API_BASE}oportunidades/`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
@@ -167,7 +171,7 @@ export default function AgregarOportunidadDialog({ visible, onHide, onSave }: Ag
         sector: "",
         tema: "",
         otroTema: "",
-        poblacion_meta: "",
+        poblacion_meta: [] as string[],
         otraPoblacion: "",
         despacho: "",
         otroDespacho: "",
@@ -175,6 +179,7 @@ export default function AgregarOportunidadDialog({ visible, onHide, onSave }: Ag
         fecha_inicio: null,
         fecha_fin: null,
         funcionario: "",
+        observaciones: "",
       });
     } catch (error) {
       console.error("Error al guardar la nueva oportunidad:", error);
@@ -192,7 +197,7 @@ export default function AgregarOportunidadDialog({ visible, onHide, onSave }: Ag
       sector: "",
       tema: "",
       otroTema: "",
-      poblacion_meta: "",
+      poblacion_meta: [] as string[],
       otraPoblacion: "",
       despacho: "",
       otroDespacho: "",
@@ -200,6 +205,7 @@ export default function AgregarOportunidadDialog({ visible, onHide, onSave }: Ag
       fecha_inicio: null,
       fecha_fin: null,
       funcionario: "",
+      observaciones: "",
     });
     setCamposConError([]);
     setErrorMensaje(null);
@@ -344,22 +350,37 @@ export default function AgregarOportunidadDialog({ visible, onHide, onSave }: Ag
 
         <div>
           <label className="font-semibold">Población meta</label>
-          <Dropdown
+          <MultiSelect
             value={formData.poblacion_meta}
             options={poblaciones}
-            onChange={(e) => setFormData({ ...formData, poblacion_meta: e.value, otraPoblacion: e.value === "Otro" ? "" : "" })}
-            placeholder="Seleccione la población meta"
-            className="w-full border border-gray-300 rounded-md py-0 px-2 bg-white text-sm"
+            onChange={(e) => {
+              const value = e.value;
+              const incluyeOtro = value.includes("Otro");
+              setFormData({
+                ...formData,
+                poblacion_meta: value,
+                otraPoblacion: incluyeOtro ? "" : "",
+              });
+            }}
+            display="chip"
+            placeholder="Seleccione una o varias"
+            className="w-full border border-gray-300 rounded-md bg-white text-sm"
           />
-          {formData.poblacion_meta === "Otro" && (
+          {formData.poblacion_meta.includes("Otro") && (
             <InputText
               value={formData.otraPoblacion ?? ""}
-              onChange={(e) => setFormData({ ...formData, otraPoblacion: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, otraPoblacion: e.target.value })
+              }
               placeholder="Escriba la población"
               className="w-full mt-2"
             />
           )}
+          <p className="text-xs font-semibold mt-2 text-gray-700">
+            *Puede seleccionar más de una opción.
+          </p>
         </div>
+
 
         <div>
           <label className="font-semibold">Viceministerio</label>
@@ -438,6 +459,16 @@ export default function AgregarOportunidadDialog({ visible, onHide, onSave }: Ag
             className="w-full border border-gray-300 rounded-md p-3 bg-white"
           />
         </div>
+
+        <div className="col-span-2">
+          <label className="font-semibold">Observaciones importantes</label>
+          <InputText
+            value={formData.observaciones}
+            onChange={(e) => handleChange("observaciones", e.target.value)}
+            className="w-full border border-gray-300 rounded-md p-5 bg-white"
+          />
+        </div>
+
       </div>
     </Dialog>
   );

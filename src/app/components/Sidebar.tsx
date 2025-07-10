@@ -111,7 +111,7 @@ export default function Sidebar() {
               </li>
               <li>
                 <Button
-                  label="Gráficas"
+                  label="Ver estadísticas"
                   className="w-full justify-start bg-gray-100 text-gray-700 hover:bg-[#CDA95F] hover:text-white transition-all duration-300 p-2 rounded-md"
                   onClick={() => {
                     router.push("/dashboard/graficasOport");

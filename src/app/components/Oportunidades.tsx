@@ -207,6 +207,10 @@ export default function OportunidadesTable() {
           <strong>Población meta:</strong>
           <p>{rowData.poblacion_meta}</p>
         </div>
+        <div>
+          <strong>Observaciones:</strong>
+          <p  className="whitespace-pre-line break-words">{rowData.observaciones}</p>
+        </div>
       </div>
     );
   };
@@ -273,10 +277,11 @@ export default function OportunidadesTable() {
         responsiveLayout="scroll"
       >
         <Column expander style={{ width: "3rem" }} />
+        <Column field="id" header="ID" />
         <Column field="nombre_oportunidad" header="Nombre de la oportunidad" sortable />
         <Column field="socio" header="Socio estratégico" sortable />
         <Column field="sector" header="Sector" sortable />
-        <Column field="fecha_inicio" header="Fecha de inicio" sortable
+        <Column field="fecha_inicio" header="Fecha" sortable
           body={(rowData) => {
             const fecha = new Date(rowData.fecha_inicio);
             return fecha.toLocaleDateString("es-CR", {

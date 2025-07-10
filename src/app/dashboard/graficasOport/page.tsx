@@ -27,7 +27,7 @@ export default function ReportesOportPage() {
               </div>
             </TabPanel>
 
-            <TabPanel header="🏛️ Viceministros">
+            <TabPanel header="🏛️ Viceministerios">
               <div className="p-4 fade-in">
                 <GraficoViceministerio />
               </div>
