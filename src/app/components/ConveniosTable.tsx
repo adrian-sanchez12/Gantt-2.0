@@ -16,6 +16,7 @@ import ConvenioDialog from "./ConvenioDialog";
 import TimelineModal from "./TimelineModal";
 import EditarRegistroDialog from "./EditarRegistroDialog";
 
+
 const fases = [
   { label: "Negociación", value: "Negociación" },
   { label: "Visto Bueno", value: "Visto Bueno" },
@@ -76,6 +77,38 @@ export default function ConveniosTable() {
   
   const [errors, setErrors] = useState({});
 
+  // Opciones para el filtro de FASE
+  const opcionesFase = [
+  { label: "Todas las fases", value: "" },
+  { label: "Negociación", value: "Negociación" },
+  { label: "Visto Bueno", value: "Visto Bueno" },
+  { label: "Revisión Técnica", value: "Revisión Técnica" },
+  { label: "Análisis Legal", value: "Análisis Legal" },
+  { label: "Verificación Legal", value: "Verificación Legal" },
+  { label: "Firma", value: "Firma" },
+];
+
+
+// Estados de filtro de FASE
+const [faseFiltro, setFaseFiltro] = useState("");
+
+
+// Opciones para el filtro de SECTOR
+const opcionesSector = [
+  { label: "Todos los sectores", value: "" },
+  { label: "Bilateral", value: "Bilateral" },
+  { label: "Sociedad Civil", value: "Sociedad Civil" },
+  { label: "Privado", value: "Privado" },
+  { label: "Público", value: "Público" },
+  { label: "Academia", value: "Academia" },
+  { label: "Multilateral Regional", value: "Multilateral Regional" },
+  { label: "Multilateral Naciones Unidas", value: "Multilateral Naciones Unidas" },
+  { label: "Otro", value: "Otro" },
+];
+
+// Estado para el filtro de sector
+const [sectorFiltro, setSectorFiltro] = useState<string>("");
+
   const fetchData = async () => {
     try {
       // Obtener convenios desde la API
@@ -99,7 +132,7 @@ export default function ConveniosTable() {
         return;
       }
   
-      // Definir el orden de las fases
+      // Definir el orden de las FASES
       const fasesOrdenadas = ["Negociación", "Visto Bueno", "Revisión Técnica", "Análisis Legal", "Verificación Legal", "Firma"];
   
       // Crear un mapa de convenio_id -> fase más avanzada
@@ -457,11 +490,23 @@ export default function ConveniosTable() {
     );
   };
 
+  const conveniosFiltrados = convenios.filter(c => {
+  const filtraBusqueda =
+    !globalFilter ||
+    c.nombre?.toLowerCase().includes(globalFilter.toLowerCase()) ||
+    c.cooperante?.toLowerCase().includes(globalFilter.toLowerCase());
+
+  const filtraFase = !faseFiltro || c.fase_actual === faseFiltro;
+  const filtraSector = !sectorFiltro || c.sector === sectorFiltro;
+
+  return filtraBusqueda && filtraFase && filtraSector;
+});
+
   return (
     <>
-      <div className="flex justify-between items-center mb-4">
+    <div className="flex justify-between items-center mb-4">
   {/* Buscador */}
-  <div className="flex items-center gap-2 w-full max-w-md">
+  <div className="flex items-center gap-2">
     <i className="pi pi-search text-gray-500" />
     <InputText
       value={globalFilter}
@@ -470,44 +515,58 @@ export default function ConveniosTable() {
         setFilters({ global: { value: e.target.value, matchMode: FilterMatchMode.CONTAINS } });
       }}
       placeholder="Buscar"
-      className="p-inputtext-sm w-full border border-gray-400 rounded-md px-3 py-2 bg-white shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-300"
+      className="p-inputtext-sm w-80 h-14 border border-gray-400 rounded-md px-4 py-2 bg-white shadow-sm 
+                 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 hover:border-blue-500 hover:shadow-lg transition-all duration-300 focus:bg-blue-50"
+    />
+
+    {/* Filtro FASES */}      
+    <Dropdown
+      value={faseFiltro}
+      options={opcionesFase}
+      onChange={(e) => setFaseFiltro(e.value)}
+      optionLabel="label"
+      optionValue="value"
+      className="p-inputtext-sm center border border-gray-400 rounded-md px-4 py-2 bg-white shadow-sm 
+                 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 hover:border-blue-500 hover:shadow-lg transition-all duration-300 focus:bg-blue-50"
+    />
+
+    {/* Filtro SECTOR */}
+    <Dropdown
+      value={sectorFiltro}
+      options={opcionesSector}
+      onChange={e => setSectorFiltro(e.value)}
+      optionLabel="label"
+      optionValue="value"
+      className="p-inputtext-sm center border border-gray-400 rounded-md px-4 py-2 bg-white shadow-sm 
+                 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 hover:border-blue-500 hover:shadow-lg transition-all duration-300 focus:bg-blue-50"
     />
   </div>
 
-  <div className="flex justify-between items-center mb-4">
-  {/* Contenedor de botones alineados */}
-  <div className="flex gap-4 mb-4">
-  <Button 
-    label="Añadir Convenio" 
-    icon="pi pi-plus" 
-    className="bg-[#172951] hover:bg-[#CDA95F] text-white font-semibold py-2 px-4 rounded-lg shadow-md transition-all duration-300 transform hover:scale-105"
-    onClick={() => setShowDialogConvenio(true)}
-  />
-  
-  <Button 
-  label="Eliminar Convenio" 
-  icon="pi pi-trash" 
-  className="p-button-danger font-semibold py-2 px-4 rounded-lg shadow-md transition-all duration-300 transform bg-red-600 hover:bg-red-700 text-white"
-  onClick={activarSeleccionConvenio}
-/>
-
-</div>
-
-
-</div>
-
+  {/* Botones */}
+  <div className="flex gap-4">
+    <Button 
+      label="Añadir Convenio" 
+      icon="pi pi-plus" 
+      className="bg-[#172951] hover:bg-[#CDA95F] text-white font-semibold py-2 px-4 rounded-lg shadow-md transition-all duration-300 transform hover:scale-105"
+      onClick={() => setShowDialogConvenio(true)}
+    />
+    <Button 
+      label="Eliminar Convenio" 
+      icon="pi pi-trash" 
+      className="bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition-all duration-300 transform"
+      onClick={activarSeleccionConvenio}
+    />
+  </div>
 </div>
 
 <DataTable
-  value={convenios}
+  value={conveniosFiltrados}
   expandedRows={expandedRows}
   onRowToggle={(e) => setExpandedRows(e.data)}
   rowExpansionTemplate={rowExpansionTemplate}
   dataKey="id"
   paginator
   rows={5}
-  filters={filters}
-  globalFilterFields={["nombre", "cooperante", "sector", "consecutivo_numerico"]}
   responsiveLayout="scroll"
   className={`custom-table ${seleccionandoConvenio ? "cursor-pointer" : ""}`}
   selectionMode={seleccionandoConvenio ? "single" : undefined} 
@@ -522,7 +581,6 @@ export default function ConveniosTable() {
   <Column field="sector" header="Sector" sortable />
   <Column field="fase_actual" header="Progreso" body={faseProgreso} sortable />
 </DataTable>
-
 
       <Dialog
   header="Añadir Registro"
