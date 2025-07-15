@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { DataTable, DataTableRowEditCompleteEvent } from "primereact/datatable";
+import { useEffect, useState, useRef } from "react";
+import { DataTable } from "primereact/datatable";
 import { Column } from "primereact/column";
 import { Button } from "primereact/button";
 import { InputText } from "primereact/inputtext";
@@ -11,7 +11,6 @@ import { Calendar } from "primereact/calendar";
 import { ProgressBar } from "primereact/progressbar";
 import { Dropdown } from "primereact/dropdown";
 import { Toast } from "primereact/toast";
-import { useRef } from "react";
 import ConvenioDialog from "./ConvenioDialog";
 import TimelineModal from "./TimelineModal";
 import EditarRegistroDialog from "./EditarRegistroDialog";
@@ -32,7 +31,7 @@ interface Convenio {
   cooperante: string;
   sector: string;
   consecutivo_numerico: number;
-  fase_actual: string; 
+  fase_actual: string;
 }
 
 interface RegistroProceso {
@@ -49,16 +48,17 @@ interface RegistroProceso {
   fecha_final: string;
   tipo_convenio: string;
   fase_registro: string;
+  doc_pdf: string; 
 }
+
 
 export default function ConveniosTable() {
   const toast = useRef<Toast>(null);
   const [convenios, setConvenios] = useState<Convenio[]>([]);
   const [registroProcesos, setRegistroProcesos] = useState<RegistroProceso[]>([]);
-  const [expandedRows, setExpandedRows] = useState<{ [key: number]: boolean }>({});
+  const [expandedRows, setExpandedRows] = useState<any>(null); // Cambio aquí
   const [filters, setFilters] = useState({});
   const [globalFilter, setGlobalFilter] = useState("");
-
   const [showDialogConvenio, setShowDialogConvenio] = useState(false);
   const [newRegistro, setNewRegistro] = useState<Partial<RegistroProceso>>({});
   const [selectedConvenioId, setSelectedConvenioId] = useState<number | null>(null);
@@ -66,16 +66,13 @@ export default function ConveniosTable() {
   const [selectedRegistroProceso, setSelectedRegistroProceso] = useState<string | null>(null);
   const [showDialog, setShowDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
-  const [registroSeleccionado, setRegistroSeleccionado] = useState(null);
-
+  const [registroSeleccionado, setRegistroSeleccionado] = useState<RegistroProceso | null>(null);
   const [seleccionandoConvenio, setSeleccionandoConvenio] = useState(false);
   const [selectedConvenioParaEliminar, setSelectedConvenioParaEliminar] = useState<Convenio | null>(null);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
-  
-  
   const [isMounted, setIsMounted] = useState(false);
-  
   const [errors, setErrors] = useState({});
+  const fileInputRefs = useRef<Record<number, HTMLInputElement | null>>({});
 
   // Opciones para el filtro de FASE
   const opcionesFase = [
@@ -165,7 +162,7 @@ const [sectorFiltro, setSectorFiltro] = useState<string>("");
       global: { value: null, matchMode: FilterMatchMode.CONTAINS },
     });
   }, []);
-
+  
   if (!isMounted) {
     return null; 
   }
@@ -193,7 +190,6 @@ const [sectorFiltro, setSectorFiltro] = useState<string>("");
       console.error("Error actualizando fase_actual:", error);
     }
   };
-  
   
 
   const consecutivoTemplate = (rowData: Convenio) => {
@@ -224,7 +220,6 @@ const [sectorFiltro, setSectorFiltro] = useState<string>("");
     };
   
     const colorClass = faseColors[rowData.fase_registro] || "bg-gray-200 text-gray-800";
-  
     return (
       <span
         className={`flex justify-center items-center px-3 py-1 rounded-md text-xs font-semibold text-center w-full whitespace-nowrap ${colorClass}`}
@@ -275,8 +270,7 @@ const [sectorFiltro, setSectorFiltro] = useState<string>("");
       return nuevosRegistros;
     });
   };
-  
-  
+
   const handleAddRegistro = async () => {
     if (!selectedConvenioId) {
       toast.current?.show({
@@ -405,8 +399,6 @@ const [sectorFiltro, setSectorFiltro] = useState<string>("");
     setShowConfirmDialog(true); 
   };
   
-  
-  
   const handleDeleteRegistro = async (id: number) => {
     try {
       const response = await fetch(`/api/registro_procesos?id=${id}`, { method: "DELETE" });
@@ -416,7 +408,6 @@ const [sectorFiltro, setSectorFiltro] = useState<string>("");
       console.error("Error eliminando registro:", error);
     }
   };
-  
 
   const textEditor = (options: any) => {
     return (
@@ -428,9 +419,65 @@ const [sectorFiltro, setSectorFiltro] = useState<string>("");
     );
   };
 
+// Subir PDF
+const handleFileUpload = async (event: any, rowData: any) => {
+  event.stopPropagation && event.stopPropagation();
+  event.preventDefault && event.preventDefault();
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const formData = new FormData();
+  formData.append("file", file);
+  formData.append("id", rowData.id);
+
+  try {
+    const response = await fetch("/api/upload", {
+      method: "POST",
+      body: formData,
+    });
+
+    if (!response.ok) {
+      toast.current?.show({ severity: "error", summary: "Error", detail: "No se pudo subir el archivo", life: 3000 });
+      return;
+    }
+
+    const { url } = await response.json();
+
+    await fetch("/api/registro_procesos", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: rowData.id, doc_pdf: url }),
+    });
+
+    toast.current?.show({ severity: "success", summary: "Éxito", detail: "Archivo subido correctamente", life: 3000 });
+    fetchData(); // Refresca la tabla de registros
+  } catch (error) {
+    toast.current?.show({ severity: "error", summary: "Error", detail: "Hubo un problema al subir el PDF", life: 3000 });
+  }
+};
+
+// Click del ícono para abrir el input file
+const handleIconClick = (rowData: any) => {
+  fileInputRefs.current[rowData.id]?.click();
+};
+
+// Eliminar PDF
+const handleDeletePDF = async (rowData: any) => {
+  try {
+    await fetch("/api/registro_procesos", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: rowData.id, doc_pdf: "" }),
+    });
+
+    toast.current?.show({ severity: "info", summary: "Documento eliminado", detail: "El PDF ha sido eliminado", life: 3000 });
+    fetchData();
+  } catch (error) {
+    toast.current?.show({ severity: "error", summary: "Error", detail: "No se pudo eliminar el PDF", life: 3000 });
+  }
+};
   const rowExpansionTemplate = (rowData: Convenio) => {
     const registros = registroProcesos.filter((registro) => registro.convenio_id === rowData.id);
-
     return (
       <div className="p-4 text-sm">
         <div className="flex justify-between items-center mb-3">
@@ -438,7 +485,8 @@ const [sectorFiltro, setSectorFiltro] = useState<string>("");
           <Button
             label="Añadir Registro"
             icon="pi pi-plus"
-            className="bg-[#172951] hover:bg-[#CDA95F] text-white font-semibold py-2 px-4 rounded-lg shadow-md transition-all duration-300 transform hover:scale-105"             onClick={() => {
+            className="bg-[#172951] hover:bg-[#CDA95F] text-white font-semibold py-2 px-4 rounded-lg shadow-md transition-all duration-300 transform hover:scale-105"
+            onClick={() => {
               setSelectedConvenioId(rowData.id);
               setShowDialog(true);
             }}
@@ -447,43 +495,89 @@ const [sectorFiltro, setSectorFiltro] = useState<string>("");
 
         <DataTable value={registros} dataKey="id" responsiveLayout="scroll" className="text-xs">
           <Column field="entidad_proponente" header="Entidad Proponente" sortable editor={textEditor} />
-          <Column field="funcionario_emisor" header="Autoridad Ministerial" sortable editor={textEditor} />
-          <Column field="autoridad_ministerial" header="Funcionario Emisor" sortable editor={textEditor} />
+          <Column field="autoridad_ministerial" header="Autoridad Ministerial" sortable editor={textEditor} />
+          <Column field="funcionario_emisor" header="Funcionario Emisor" sortable editor={textEditor} />
           <Column field="entidad_emisora" header="Entidad Emisora" sortable editor={textEditor} />
           <Column field="funcionario_receptor" header="Funcionario Receptor" sortable editor={textEditor} />
-          <Column field="entidad_receptora" header="Entidad Receptora"  editor={textEditor} />
-          <Column 
-  field="registro_proceso" 
-  header="Registro del Proceso" 
-  body={(rowData) => (
-    <span 
-      className="text-blue-600 underline cursor-pointer hover:text-blue-800 transition"
-      onClick={() => {
-        setSelectedRegistroProceso(rowData.id); 
-        setShowTimeline(true);
-      }}
-    >
-      {rowData.registro_proceso}
-    </span>
-  )}
-  style={{ width: "250px" }} 
-/>
+          <Column field="entidad_receptora" header="Entidad Receptora" editor={textEditor} />
+          <Column
+            field="registro_proceso"
+            header="Registro del Proceso"
+            body={(rowData) => (
+              <span
+                className="text-blue-600 underline cursor-pointer hover:text-blue-800 transition"
+                onClick={() => {
+                  setSelectedRegistroProceso(rowData.id);
+                  setShowTimeline(true);
+                }}
+              >
+                {rowData.registro_proceso}
+              </span>
+            )}
+            style={{ width: "250px" }}
+          />
           <Column field="fecha_inicio" header="Fecha Inicio" editor={textEditor} body={(rowData) => formatDate(rowData.fecha_inicio)} sortable />
           <Column field="tipo_convenio" header="Tipo de Convenio" editor={textEditor} />
           <Column field="fase_registro" header="Fase" body={faseRegistroTemplate} sortable />
           <Column
-          header="Acciones"
-          body={(rowData) => (
-            <Button
-              icon="pi pi-pencil"
-              className="p-button-rounded p-button-warning p-button-sm"
-              onClick={() => abrirEditarRegistro(rowData)}
-            />
-          )}
-        />          <Column body={(rowData) => (
-              <Button icon="pi pi-trash" className="p-button-danger p-button-sm" onClick={() => handleDeleteRegistro(rowData.id)} />
+            header="Acciones"
+            body={(rowData) => (
+              <div className="flex gap-2 items-center">
+                <Button
+                  icon="pi pi-pencil"
+                  className="p-button-rounded p-button-warning p-button-sm"
+                  onClick={() => abrirEditarRegistro(rowData)}
+                  tooltip="Editar"
+                />
+                {/* SUBIR/VER/ELIMINAR PDF */}
+                {rowData.doc_pdf ? (
+                  <>
+                    <a
+                      href={rowData.doc_pdf}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-600 underline hover:text-blue-800 transition"
+                      title="Ver PDF"
+                    >
+                      📄
+                    </a>
+                    <Button
+                      icon="pi pi-trash"
+                      className="p-button-rounded p-button-danger p-button-sm"
+                      onClick={() => handleDeletePDF(rowData)}
+                      tooltip="Eliminar PDF"
+                    />
+                  </>
+                ) : (
+                  <>
+                    <Button
+                      icon="pi pi-upload"
+                      className="p-button-rounded p-button-info p-button-sm"
+                      onClick={() => handleIconClick(rowData)}
+                      tooltip="Subir PDF"
+                    />
+                    <input
+                      type="file"
+                      accept="application/pdf"
+                      ref={(el) => {
+                        if (el) {
+                          fileInputRefs.current[rowData.id] = el;
+                        }
+                      }}
+                      onChange={(event) => handleFileUpload(event, rowData)}
+                      style={{ display: "none" }}
+                    />
+                  </>
+                )}
+                <Button
+                  icon="pi pi-times"
+                  className="p-button-rounded p-button-danger p-button-sm"
+                  onClick={() => handleDeleteRegistro(rowData.id)}
+                  tooltip="Eliminar"
+                />
+              </div>
             )}
-            style={{ textAlign: "center", width: "50px" }}
+            style={{ textAlign: "center", width: "180px" }}
           />
         </DataTable>
       </div>

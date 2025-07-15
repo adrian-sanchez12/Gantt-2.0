@@ -1,6 +1,7 @@
 "use client";
 import { TabView, TabPanel } from "primereact/tabview";
 import Estadistica2 from "../components/Estadisticas2";
+import EstadisticaPorSector from "../components/EstadisticaPorSector";
 import Estadistica3 from "../components/Estadisticas3";
 import { useState } from "react";
 
@@ -18,9 +19,15 @@ export default function EstadisticaPage() {
             onTabChange={(e) => setActiveIndex(e.index)}
           >
 
-            <TabPanel header="📈 Fases del macroproceso de convenios de cooperación ">
+            <TabPanel header="📈 Por Fase de Macroproceso">
               <div className="p-4 fade-in">
                 <Estadistica2 />
+              </div>
+            </TabPanel>
+
+            <TabPanel header="📊 Por Sector">
+              <div className="p-4 fade-in">
+                <EstadisticaPorSector />
               </div>
             </TabPanel>
 

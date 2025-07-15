@@ -5,12 +5,12 @@ import { Chart } from "primereact/chart";
 import { Accordion, AccordionTab } from "primereact/accordion";
 
 const fases = [
-  { nombre: "Negociación", color: "#3B82F6" }, // Azul
-  { nombre: "Visto Bueno", color: "#10B981" }, // Verde
-  { nombre: "Revisión Técnica", color: "#FACC15" }, // Amarillo
-  { nombre: "Análisis Legal", color: "#F97316" }, // Naranja
-  { nombre: "Verificación Legal", color: "#EF4444" }, // Rojo
-  { nombre: "Firma", color: "#8B5CF6" }, // Morado
+  { nombre: "Negociación", color: "#2c395a" }, 
+  { nombre: "Visto Bueno", color: "#7b90b9" }, 
+  { nombre: "Revisión Técnica", color: "#4f6fb0" }, 
+  { nombre: "Análisis Legal", color: "#a58e60" }, 
+  { nombre: "Verificación Legal", color: "#e8d2ad" },
+  { nombre: "Firma", color: "#cfac65" }, 
 ];
 
 export default function Estadistica2() {
