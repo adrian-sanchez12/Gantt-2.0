@@ -44,6 +44,10 @@ body {
   background-color: #e5e7eb;
 }
 
+th.estado-columna {
+  text-align: center !important;
+}
+
 .p-progressbar-value .p-progressbar-label {
   display: none !important;
 }
@@ -134,6 +138,52 @@ body {
   color: white !important;
 }
 
+/* Underline color para pestañas */
+.p-tabview .p-tabview-nav li.p-highlight .p-tabview-nav-link {
+  border-bottom: 4px solid #CDA95F !important;  /* dorado institucional */
+  color: #172951 !important;
+  font-weight: bold;
+  background: #fff !important;
+  border-radius: 0;
+}
+
+.p-tabview .p-tabview-nav .p-tabview-nav-link {
+  color: #52525b;
+  font-size: 1.15rem;
+  padding-bottom: 0.4rem;
+  transition: color 0.2s;
+  background: #fff !important;
+  border-radius: 0;
+}
+
+.p-tabview .p-tabview-nav .p-tabview-nav-link:not(.p-disabled):hover {
+  color: #CDA95F !important;
+  background: #f3f4f6 !important;
+}
+
+/* PrimeReact paginator: página activa resaltada */
+.p-paginator .p-paginator-pages .p-paginator-page.p-highlight {
+  background: #CDA95F !important;   /* fondo dorado */
+  color: #fff !important;           /* texto blanco */
+  border-radius: 50%;               /* opcional: círculo */
+  font-weight: bold;
+  border: none;
+  width: 2.1rem;        /* Ajusta el tamaño del círculo */
+  height: 2.1rem;
+  min-width: 2.1rem;
+  min-height: 2.1rem;
+  line-height: 2.1rem;
+  box-shadow: 0 2px 6px #e7d09b55;
+  transition: background 0.2s, color 0.2s;
+}
+
+.p-paginator .p-paginator-pages .p-paginator-page:not(.p-highlight):hover {
+  background: #e5e7eb !important;
+  color: #172951 !important;
+  border-radius: 50%;
+}
+
+
 @font-face {
   font-family: "Henderson";
   src: url("/fonts/Henderson_Sans_Basic_Light.otf") format("opentype");
@@ -145,6 +195,7 @@ body {
   font-family: "Henderson" !important;
   font-size: small;
 }
+
 
 
 

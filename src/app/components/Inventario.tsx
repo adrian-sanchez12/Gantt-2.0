@@ -7,18 +7,41 @@ import { InputText } from "primereact/inputtext";
 import { FilterMatchMode } from "primereact/api";
 import { Button } from "primereact/button";
 import { Toast } from "primereact/toast";
+import { Dialog } from "primereact/dialog"
 import EditarInventarioDialog from "./EditarInventarioDialog";
 import AgregarInventarioDialog from "./AgregarInventarioDialog";
 
+
 export default function InventarioTable() {
-  const [inventario, setInventario] = useState([]);
+  const [inventario, setInventario] = useState<InventarioItem[]>([]);
   const [expandedRows, setExpandedRows] = useState({});
   const [globalFilter, setGlobalFilter] = useState("");
+  const [estadoFilter, setEstadoFilter] = useState(""); 
   const toast = useRef<Toast>(null);
   const fileInputRefs = useRef<Record<number, HTMLInputElement | null>>({});
   const [registroSeleccionado, setRegistroSeleccionado] = useState(null);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showAddDialog, setShowAddDialog] = useState(false);
+  const [showBanner, setShowBanner] = useState(true);
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [registroAEliminar, setRegistroAEliminar] = useState<InventarioItem | null>(null);
+
+  
+
+interface InventarioItem {
+  id: number;
+  cooperante: string;
+  contraparte_externa: string;
+  nombre_convenio: string;
+  objeto_convenio: string;
+  tipo_instrumento: string;
+  presupuesto: number;
+  instancias_tecnicas: string;
+  informe: string;
+  fecha_rige: string;
+  fecha_vencimiento: string;
+  documento_pdf: string;
+}
 
   useEffect(() => {
     fetchInventario();
@@ -27,12 +50,31 @@ export default function InventarioTable() {
   const fetchInventario = async () => {
     try {
       const response = await fetch("/api/inventario");
-      const data = await response.json();
+      const data: InventarioItem[] = await response.json();
       setInventario(data || []);
     } catch (error) {
       console.error("Error obteniendo inventario:", error);
     }
   };
+
+// Función para calcular estado
+  const calcularEstado = (fechaVto: string) => {
+    if (!fechaVto) return "Sin fecha";
+    const hoy = new Date();
+    const vto = new Date(fechaVto);
+    const diffMeses =
+      (vto.getFullYear() - hoy.getFullYear()) * 12 +
+      (vto.getMonth() - hoy.getMonth());
+
+    if (diffMeses < 0) return "Vencido";
+    if (diffMeses <= 6) return "Próximo a vencer";
+    return "Vigente";
+  };
+
+  // Función para contar convenios próximos a vencer
+  const proximosAVencer = inventario.filter(
+    (item) => calcularEstado(item.fecha_vencimiento) === "Próximo a vencer"
+  );
 
   const handleFileUpload = async (event: any, rowData: any) => {
     const file = event.target.files[0];
@@ -146,11 +188,50 @@ export default function InventarioTable() {
 
   return (
     <div className="p-4">
-      <Toast ref={toast} />
+    <Toast ref={toast} />
+    {/* Banner Proactivo */}
+    {proximosAVencer.length > 0 && showBanner && (
+      <div className="bg-yellow-200 border-l-4 border-yellow-500 text-yellow-700 p-4 mb-10 rounded flex justify-between items-center text-md">
+        <span>
+          ⚠ Tienes <strong>{proximosAVencer.length}</strong> convenios próximos a vencer. Plazo <strong>menor a 6 meses</strong>.
+        </span>
+        {/* Botones alineados */}
+        <div className="flex items-center gap-2">
+          {estadoFilter === "Próximo a vencer" ? (
+            // Botón de Volver
+            <Button
+              label="Volver"
+              className="p-button-sm bg-yellow-700 border-none text-white font-semibold py-2 px-3"
+              onClick={() => setEstadoFilter("")}
+            />
+          ) : (
+            // Botón de Ver ahora
+            <Button
+              label="Ver ahora"
+              icon="pi pi-filter"
+              className="p-button-sm bg-yellow-700 border-none text-white font-semibold py-2 px-3"
+              onClick={() => setEstadoFilter("Próximo a vencer")}
+            />
+          )}
 
+          {/* Botón de cerrar */}
+          <button
+            className="ml-2 text-yellow-900 hover:text-red-600 text-xl font-bold bg-transparent border-none cursor-pointer focus:outline-none"
+            onClick={() => setShowBanner(false)}
+            title="Ocultar alerta"
+            style={{ lineHeight: '1', padding: 0 }}
+          >
+            ×
+          </button>
+        </div>
+      </div>
+    )}
+
+      {/* Barra de búsqueda */}
       <div className="flex justify-between items-center mb-6">
         <div className="flex items-center gap-2 w-full max-w-md">
           <i className="pi pi-search text-gray-500" />
+
           <InputText
             value={globalFilter}
             onChange={(e) => setGlobalFilter(e.target.value)}
@@ -162,13 +243,15 @@ export default function InventarioTable() {
         <Button
           label="Añadir Convenio"
           icon="pi pi-plus"
-          className="bg-[#172951] hover:bg-[#CDA95F] text-white font-semibold py-2 px-4 rounded-lg shadow-md transition-all duration-300 transform hover:scale-105 text-sm"
+          className="bg-[#172951] hover:bg-[#CDA95F] text-white font-semibold py-2 px-4 rounded-lg shadow-md transition-all duration-300 transform hover:scale-105"
           onClick={() => setShowAddDialog(true)}
         />
       </div>
 
       <DataTable
-        value={inventario}
+        value={inventario.filter((item) =>
+          estadoFilter ? calcularEstado(item.fecha_vencimiento) === estadoFilter : true
+        )}
         expandedRows={expandedRows}
         onRowToggle={(e) => setExpandedRows(e.data)}
         rowExpansionTemplate={rowExpansionTemplate}
@@ -184,11 +267,33 @@ export default function InventarioTable() {
         <Column field="cooperante" header="Cooperante" sortable />
         <Column field="contraparte_externa" header="Contraparte Externa" sortable />
         <Column field="nombre_convenio" header="Nombre del Convenio" sortable />
+
+        {/* Columna Estado */}
+        <Column
+          header="Estado"
+          body={(rowData) => {
+            const estado = calcularEstado(rowData.fecha_vencimiento);
+            const color =
+              estado === "Vencido"
+                ? "bg-red-500"
+                : estado === "Próximo a vencer"
+                ? "bg-yellow-500"
+                : "bg-green-500";
+            return (
+              <span className={`inline-block min-w-[120px] text-center text-white px-3 py-1 rounded-full text-xs whitespace-nowrap ${color}`}>
+                {estado}
+              </span>
+            );
+          }}
+        />
+        {/* Columna PDF */}
         <Column
           field="documento_pdf"
           header="Documento PDF"
+          headerStyle={{ textAlign: "center" }}
+          bodyStyle={{ textAlign: "center", verticalAlign: "middle" }}
           body={(rowData) => (
-            <div className="flex items-center gap-2">
+            <div className="flex items-center justify-center gap-2">
               {rowData.documento_pdf ? (
                 <>
                   <a
@@ -234,16 +339,21 @@ export default function InventarioTable() {
           header="Acciones"
           body={(rowData) => (
             <div className="flex gap-2">
+              {/* Botón Editar */}
               <Button
                 icon="pi pi-pencil"
                 className="p-button-rounded p-button-warning p-button-sm"
                 onClick={() => abrirDialogEditar(rowData)}
               />
+              {/* Botón Eliminar*/}
               <Button
                 icon="pi pi-times"
                 className="p-button-rounded p-button-danger p-button-sm"
-                onClick={() => handleDeleteInventario(rowData.id)}
-              />
+                onClick={() => {
+                  setRegistroAEliminar(rowData);
+                  setShowConfirmDialog(true);
+                  }}
+                />
             </div>
           )}
           style={{ textAlign: "center", width: "110px" }}
@@ -278,6 +388,49 @@ export default function InventarioTable() {
           fetchInventario();
         }}
       />
+
+<Dialog
+  visible={showConfirmDialog}
+  onHide={() => setShowConfirmDialog(false)}
+  header={
+    <span style={{ color: "#172951", fontWeight: "bold", fontSize: "1.6rem" }}>
+      Confirmar eliminación
+    </span>
+  }
+  modal
+  style={{ minWidth: 400 }}
+  footer={
+    <div className="flex justify-end gap-4">
+      <Button
+        label="Cancelar"
+        icon="pi pi-times text-[#172951]"
+        className="p-button-text"
+        style={{ color: "#172951" }}
+        onClick={() => setShowConfirmDialog(false)}
+      />
+      <Button
+        label="Eliminar"
+        icon="pi pi-check"
+        className="p-button-danger p-2"
+        style={{ backgroundColor: "#e53935", borderColor: "#e53935", color: "#fff" }}
+        onClick={async () => {
+          if (registroAEliminar) {
+            await handleDeleteInventario(registroAEliminar.id);
+          }
+          setShowConfirmDialog(false);
+        }}
+      />
+    </div>
+  }
+>
+  <div className="flex items-center gap-3 mt-2">
+    <i className="pi pi-exclamation-triangle text-2xl text-yellow-500" />
+    <span className="text-lg">
+      ¿Seguro que deseas eliminar este <span className="font-semibold" style={{ color: "#172951" }}>convenio del inventario</span>?
+    </span>
+  </div>
+</Dialog>
+
     </div>
   );
 }

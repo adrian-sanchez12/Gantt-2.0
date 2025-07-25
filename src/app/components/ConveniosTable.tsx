@@ -14,7 +14,7 @@ import { Toast } from "primereact/toast";
 import ConvenioDialog from "./ConvenioDialog";
 import TimelineModal from "./TimelineModal";
 import EditarRegistroDialog from "./EditarRegistroDialog";
-
+import EditarConvenioDialog from "./EditarConvenioDialog";
 
 const fases = [
   { label: "Negociación", value: "Negociación" },
@@ -67,13 +67,17 @@ export default function ConveniosTable() {
   const [showDialog, setShowDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [registroSeleccionado, setRegistroSeleccionado] = useState<RegistroProceso | null>(null);
+  const [showConfirmDialogRegistro, setShowConfirmDialogRegistro] = useState(false);
+  const [registroProcesoAEliminar, setRegistroProcesoAEliminar] = useState<RegistroProceso | null>(null);
   const [seleccionandoConvenio, setSeleccionandoConvenio] = useState(false);
   const [selectedConvenioParaEliminar, setSelectedConvenioParaEliminar] = useState<Convenio | null>(null);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [showEditConvenioDialog, setShowEditConvenioDialog] = useState(false);
+  const [selectedConvenioParaEditar, setSelectedConvenioParaEditar] = useState<Convenio | null>(null);
   const [isMounted, setIsMounted] = useState(false);
   const [errors, setErrors] = useState({});
   const fileInputRefs = useRef<Record<number, HTMLInputElement | null>>({});
-
+  
   // Opciones para el filtro de FASE
   const opcionesFase = [
   { label: "Todas las fases", value: "" },
@@ -85,10 +89,8 @@ export default function ConveniosTable() {
   { label: "Firma", value: "Firma" },
 ];
 
-
 // Estados de filtro de FASE
 const [faseFiltro, setFaseFiltro] = useState("");
-
 
 // Opciones para el filtro de SECTOR
 const opcionesSector = [
@@ -191,7 +193,6 @@ const [sectorFiltro, setSectorFiltro] = useState<string>("");
     }
   };
   
-
   const consecutivoTemplate = (rowData: Convenio) => {
     return (
 <span className="flex justify-center items-center bg-[#CDA95F] text-white font-bold text-sm rounded-full w-8 h-8">
@@ -207,7 +208,6 @@ const [sectorFiltro, setSectorFiltro] = useState<string>("");
   
     return <ProgressBar value={progress} className="w-32 h-3" showValue={false} />;
   };
-  
   
   const faseRegistroTemplate = (rowData: RegistroProceso) => {
     const faseColors: Record<string, string> = {
@@ -321,8 +321,6 @@ const [sectorFiltro, setSectorFiltro] = useState<string>("");
     }
   };
   
-  
-
   const dialogFooter = (
     <div className="flex justify-end gap-2 p-4">
       <Button
@@ -341,11 +339,15 @@ const [sectorFiltro, setSectorFiltro] = useState<string>("");
       />
     </div>
   );
+
+  // Eliminar Convenio
   const handleDeleteConvenio = async () => {
     if (!selectedConvenioParaEliminar) return;
   
     try {
-      const response = await fetch(`/api/convenios?id=${selectedConvenioParaEliminar.id}`, { method: "DELETE" });
+      const response = await fetch(`/api/convenios?id=${selectedConvenioParaEliminar.id}`, {
+      method: "DELETE", 
+    });
   
       if (!response.ok) throw new Error("Error al eliminar el convenio");
   
@@ -370,35 +372,33 @@ const [sectorFiltro, setSectorFiltro] = useState<string>("");
     }
   };
   
-  
-  
+  // Activa o desactiva el modo "Eliminar Convenio"
   const activarSeleccionConvenio = () => {
-    setSeleccionandoConvenio(!seleccionandoConvenio);
-    setSelectedConvenioParaEliminar(null); 
-  };
-
-  const onRowClick = (event: { data: Convenio }) => {
-    if (!seleccionandoConvenio) return; 
+  setSeleccionandoConvenio(!seleccionandoConvenio);
+  setSelectedConvenioParaEliminar(null);
+};
   
-    setSelectedConvenioParaEliminar(event.data);
-    setShowConfirmDialog(true);
-  };
-   
+  // Para confirmar antes de eliminar
   const confirmarEliminarConvenio = () => {
     if (!selectedConvenioParaEliminar) {
-      toast.current?.show({ severity: "warn", summary: "Atención", detail: "Seleccione un convenio", life: 3000 });
+      toast.current?.show({ 
+        severity: "warn", 
+        summary: "Atención", 
+        detail: "Seleccione un convenio", 
+        life: 3000, 
+      });
       return;
     }
     setShowConfirmDialog(true);
   };
 
-  const onSelectionChange = (e:any) => {
-    if (!seleccionandoConvenio) return; 
-  
-    setSelectedConvenioParaEliminar(e.value); 
-    setShowConfirmDialog(true); 
-  };
-  
+  // Selección para eliminar
+  const handleSeleccionEliminar = (e: any) => {
+  if (!seleccionandoConvenio) return; // Solo actúa en modo eliminar
+  setSelectedConvenioParaEliminar(e.value);
+};
+
+// Eliminar Registro de Convenio
   const handleDeleteRegistro = async (id: number) => {
     try {
       const response = await fetch(`/api/registro_procesos?id=${id}`, { method: "DELETE" });
@@ -408,6 +408,20 @@ const [sectorFiltro, setSectorFiltro] = useState<string>("");
       console.error("Error eliminando registro:", error);
     }
   };
+
+  //Para abrir el modal de Editar Convenio
+  const abrirDialogoEdicion = () => {
+  if (!selectedConvenioParaEditar) {
+    toast.current?.show({
+      severity: "warn",
+      summary: "Atención",
+      detail: "Seleccione un convenio para editar",
+      life: 3000,
+    });
+    return;
+  }
+  setShowEditConvenioDialog(true);
+};
 
   const textEditor = (options: any) => {
     return (
@@ -493,86 +507,89 @@ const handleDeletePDF = async (rowData: any) => {
           />
         </div>
 
-        <DataTable value={registros} dataKey="id" responsiveLayout="scroll" className="text-xs">
-          <Column field="entidad_proponente" header="Entidad Proponente" sortable editor={textEditor} />
-          <Column field="autoridad_ministerial" header="Autoridad Ministerial" sortable editor={textEditor} />
-          <Column field="funcionario_emisor" header="Funcionario Emisor" sortable editor={textEditor} />
-          <Column field="entidad_emisora" header="Entidad Emisora" sortable editor={textEditor} />
-          <Column field="funcionario_receptor" header="Funcionario Receptor" sortable editor={textEditor} />
-          <Column field="entidad_receptora" header="Entidad Receptora" editor={textEditor} />
-          <Column
-            field="registro_proceso"
-            header="Registro del Proceso"
-            body={(rowData) => (
-              <span
-                className="text-blue-600 underline cursor-pointer hover:text-blue-800 transition"
-                onClick={() => {
-                  setSelectedRegistroProceso(rowData.id);
-                  setShowTimeline(true);
-                }}
-              >
-                {rowData.registro_proceso}
-              </span>
-            )}
-            style={{ width: "250px" }}
+  <DataTable value={registros} dataKey="id" responsiveLayout="scroll" className="text-xs">
+  <Column field="entidad_proponente" header="Entidad Proponente" sortable editor={textEditor} />
+  <Column field="autoridad_ministerial" header="Autoridad Ministerial" sortable editor={textEditor} />
+  <Column field="funcionario_emisor" header="Funcionario Emisor" sortable editor={textEditor} />
+  <Column field="entidad_emisora" header="Entidad Emisora" sortable editor={textEditor} />
+  <Column field="funcionario_receptor" header="Funcionario Receptor" sortable editor={textEditor} />
+  <Column field="entidad_receptora" header="Entidad Receptora" editor={textEditor} />
+  <Column
+   field="registro_proceso"
+   header="Registro del Proceso"
+   body={(rowData) => (
+      <span
+        className="text-blue-600 underline cursor-pointer hover:text-blue-800 transition"
+         onClick={() => {
+            setSelectedRegistroProceso(rowData.id);
+            setShowTimeline(true);
+                }}>
+      {rowData.registro_proceso}
+      </span>
+       )}
+      style={{ width: "250px" }}
           />
-          <Column field="fecha_inicio" header="Fecha Inicio" editor={textEditor} body={(rowData) => formatDate(rowData.fecha_inicio)} sortable />
-          <Column field="tipo_convenio" header="Tipo de Convenio" editor={textEditor} />
-          <Column field="fase_registro" header="Fase" body={faseRegistroTemplate} sortable />
-          <Column
-            header="Acciones"
-            body={(rowData) => (
-              <div className="flex gap-2 items-center">
-                <Button
-                  icon="pi pi-pencil"
-                  className="p-button-rounded p-button-warning p-button-sm"
-                  onClick={() => abrirEditarRegistro(rowData)}
-                  tooltip="Editar"
+  <Column field="fecha_inicio" header="Fecha Inicio" editor={textEditor} body={(rowData) => formatDate(rowData.fecha_inicio)} sortable />
+  <Column field="tipo_convenio" header="Tipo de Convenio" editor={textEditor} />
+  <Column field="fase_registro" header="Fase" body={faseRegistroTemplate} sortable />
+  <Column
+   header="Acciones"
+      body={(rowData) => (
+        <div className="flex gap-2 items-center">
+            <Button
+              icon="pi pi-pencil"
+              className="p-button-rounded p-button-warning p-button-sm"
+              onClick={() => abrirEditarRegistro(rowData)}
+              tooltip="Editar"
+              />
+
+      {/* SUBIR/VER/ELIMINAR PDF */}
+      {rowData.doc_pdf ? (
+          <>
+          <a
+          href={rowData.doc_pdf}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-blue-600 underline hover:text-blue-800 transition"
+          title="Ver PDF"
+          >
+           📄
+            </a>
+             <Button
+                icon="pi pi-trash"
+                className="p-button-rounded p-button-danger p-button-sm"
+                onClick={() => handleDeletePDF(rowData)}
+                tooltip="Eliminar PDF"
                 />
-                {/* SUBIR/VER/ELIMINAR PDF */}
-                {rowData.doc_pdf ? (
-                  <>
-                    <a
-                      href={rowData.doc_pdf}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-blue-600 underline hover:text-blue-800 transition"
-                      title="Ver PDF"
-                    >
-                      📄
-                    </a>
-                    <Button
-                      icon="pi pi-trash"
-                      className="p-button-rounded p-button-danger p-button-sm"
-                      onClick={() => handleDeletePDF(rowData)}
-                      tooltip="Eliminar PDF"
-                    />
-                  </>
+            </>
                 ) : (
-                  <>
-                    <Button
-                      icon="pi pi-upload"
-                      className="p-button-rounded p-button-info p-button-sm"
-                      onClick={() => handleIconClick(rowData)}
-                      tooltip="Subir PDF"
-                    />
-                    <input
-                      type="file"
-                      accept="application/pdf"
-                      ref={(el) => {
-                        if (el) {
-                          fileInputRefs.current[rowData.id] = el;
-                        }
-                      }}
-                      onChange={(event) => handleFileUpload(event, rowData)}
-                      style={{ display: "none" }}
-                    />
-                  </>
+            <>
+              <Button
+                icon="pi pi-upload"
+                className="p-button-rounded p-button-info p-button-sm"
+                onClick={() => handleIconClick(rowData)}
+                tooltip="Subir PDF"
+                />
+                <input
+                type="file"
+                accept="application/pdf"
+                ref={(el) => {
+                  if (el) {
+                    fileInputRefs.current[rowData.id] = el;
+                     }
+                  }}   
+                  onChange={(event) => handleFileUpload(event, rowData)}
+                  style={{ display: "none" }}
+                />
+             </>
                 )}
                 <Button
                   icon="pi pi-times"
                   className="p-button-rounded p-button-danger p-button-sm"
-                  onClick={() => handleDeleteRegistro(rowData.id)}
+                  onClick={() => {
+                    setRegistroProcesoAEliminar(rowData); 
+                    setShowConfirmDialogRegistro(true);
+                  }}
                   tooltip="Eliminar"
                 />
               </div>
@@ -644,12 +661,42 @@ const handleDeletePDF = async (rowData: any) => {
       className="bg-[#172951] hover:bg-[#CDA95F] text-white font-semibold py-2 px-4 rounded-lg shadow-md transition-all duration-300 transform hover:scale-105"
       onClick={() => setShowDialogConvenio(true)}
     />
-    <Button 
-      label="Eliminar Convenio" 
-      icon="pi pi-trash" 
-      className="bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition-all duration-300 transform"
-      onClick={activarSeleccionConvenio}
-    />
+    <Button
+  label="Editar Convenio"
+  icon="pi pi-pencil"
+  className="bg-[#CDA95F] hover:bg-yellow-600 text-white font-semibold py-2 px-4 rounded-lg transition-all duration-300 transform"
+  onClick={() => {
+    if (!selectedConvenioParaEditar) {
+      toast.current?.show({
+        severity: "warn",
+        summary: "Atención",
+        detail: "Seleccione un convenio para editar",
+        life: 3000,
+      });
+      return;
+    }
+    setShowEditConvenioDialog(true);
+  }}
+/>
+
+<Button
+  label="Eliminar Convenio"
+  icon="pi pi-trash"
+  className="bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition-all duration-300"
+  onClick={() => {
+    if (!selectedConvenioParaEditar) {
+      toast.current?.show({
+        severity: "warn",
+        summary: "Atención",
+        detail: "Seleccione un convenio para eliminar",
+        life: 3000,
+      });
+      return;
+    }
+    setSelectedConvenioParaEliminar(selectedConvenioParaEditar); // Marcamos cuál se eliminará
+    setShowConfirmDialog(true); // Mostramos modal de confirmación
+  }}
+/>
   </div>
 </div>
 
@@ -661,13 +708,22 @@ const handleDeletePDF = async (rowData: any) => {
   dataKey="id"
   paginator
   rows={5}
-  responsiveLayout="scroll"
-  className={`custom-table ${seleccionandoConvenio ? "cursor-pointer" : ""}`}
-  selectionMode={seleccionandoConvenio ? "single" : undefined} 
-  selection={selectedConvenioParaEliminar}
-  onSelectionChange={onSelectionChange} 
+  className="custom-table"
+  selection={selectedConvenioParaEditar}
+  onSelectionChange={(e) => setSelectedConvenioParaEditar(e.value as Convenio | null)}
+  selectionMode="single" // Selección por fila para editar
 >
-  {seleccionandoConvenio && <Column selectionMode="single" headerStyle={{ width: "3rem" }} className="p-selection-column"/>}
+  {/* Columna para checkboxes de eliminación*/}
+  {seleccionandoConvenio && (
+    <Column
+      selectionMode="single"
+      headerStyle={{ width: "3rem" }}
+      className="p-selection-column"
+      bodyClassName="cursor-pointer"
+      style={{ width: "3rem" }}
+    />
+  )}
+
   <Column expander style={{ width: "5rem" }} />
   <Column field="consecutivo_numerico" header="Registro" body={consecutivoTemplate} sortable />
   <Column field="nombre" header="Nombre" sortable />
@@ -676,7 +732,8 @@ const handleDeletePDF = async (rowData: any) => {
   <Column field="fase_actual" header="Progreso" body={faseProgreso} sortable />
 </DataTable>
 
-      <Dialog
+
+  <Dialog
   header="Añadir Registro"
   visible={showDialog}
   style={{ width: "50vw" }}
@@ -711,9 +768,7 @@ const handleDeletePDF = async (rowData: any) => {
     placeholder="Seleccione la Autoridad Ministerial"
     onChange={(e) => setNewRegistro({ ...newRegistro, autoridad_ministerial: e.value })}
   />
-
 </div>
-
 
     {/* Funcionario Emisor */}
     <div className="flex flex-col">
@@ -808,23 +863,85 @@ const handleDeletePDF = async (rowData: any) => {
   </div>
 </Dialog>
 
+{/* Dialog de confirmación al eliminar un registro */}
 <Dialog
-  visible={showConfirmDialog}
-  style={{ width: "450px" }}
-  header="Confirmar Eliminación"
+  visible={showConfirmDialogRegistro}
+  onHide={() => setShowConfirmDialogRegistro(false)}
+  header={
+    <span style={{ color: "#172951", fontWeight: "bold", fontSize: "1.6rem" }}>
+      Confirmar eliminación
+    </span>
+  }
   modal
+  style={{ minWidth: 400 }}
   footer={
-    <div className="flex justify-end gap-2">
-      <Button label="Cancelar" icon="pi pi-times" onClick={() => setShowConfirmDialog(false)} className="p-button-text" />
-      <Button label="Eliminar" icon="pi pi-check" className="p-button-danger" onClick={handleDeleteConvenio} />
+    <div className="flex justify-end gap-4">
+      <Button
+        label="Cancelar"
+        icon="pi pi-times text-[#172951]"
+        className="p-button-text"
+        style={{ color: "#172951"}}
+        onClick={() => setShowConfirmDialogRegistro(false)}
+      />
+      <Button
+        label="Eliminar"
+        icon="pi pi-check"
+        className="p-button-danger p-2"
+        style={{ backgroundColor: "#e53935", borderColor: "#e53935", color: "#fff" }}
+        onClick={async () => {
+          if (registroProcesoAEliminar) {
+            await handleDeleteRegistro(registroProcesoAEliminar.id);
+          }
+          setShowConfirmDialogRegistro(false);
+        }}
+      />
     </div>
   }
+>
+  <div className="flex items-center gap-3 mt-2">
+  <i className="pi pi-exclamation-triangle text-2xl text-yellow-500" />
+  <span className="text-lg">
+    ¿Seguro que deseas eliminar este <span className="font-semibold" style={{ color: "#172951" }}>registro de convenio</span>?
+  </span>
+</div>
+</Dialog>
+
+<Dialog
+  visible={showConfirmDialog}
   onHide={() => setShowConfirmDialog(false)}
+  header={
+    <span style={{ color: "#172951", fontWeight: "bold", fontSize: "1.6rem" }}>
+      Confirmar eliminación
+    </span>
+  }
+  modal
+  style={{ minWidth: 400 }}
+  footer={
+    <div className="flex justify-end gap-4">
+      <Button
+        label="Cancelar"
+        icon="pi pi-times text-[#172951]"
+        className="p-button-text"
+        style={{ color: "#172951" }}
+        onClick={() => setShowConfirmDialog(false)}
+      />
+      <Button
+        label="Eliminar"
+        icon="pi pi-check"
+        className="p-button-danger p-2"
+        style={{ backgroundColor: "#e53935", borderColor: "#e53935", color: "#fff" }}
+        onClick={handleDeleteConvenio}
+      />
+    </div>
+  }
 >
   {selectedConvenioParaEliminar && (
-    <div>
-      <p className="text-gray-700">¿Seguro que quieres eliminar este convenio?</p>
-      <p className="font-semibold text-red-600">{selectedConvenioParaEliminar.nombre}</p>
+    <div className="flex items-center gap-3 mt-2">
+      <i className="pi pi-exclamation-triangle text-2xl text-yellow-500" />
+      <span className="text-lg">
+        ¿Seguro que deseas eliminar este <span className="font-semibold" style={{ color: "#172951" }}>convenio</span>?
+        <div className="font-semibold text-red-600">{selectedConvenioParaEliminar.nombre}</div>
+      </span>
     </div>
   )}
 </Dialog>
@@ -835,7 +952,12 @@ const handleDeletePDF = async (rowData: any) => {
   onHide={() => setShowTimeline(false)} 
   registroProcesoId={selectedRegistroProceso ? Number(selectedRegistroProceso) : null}
 />
-<ConvenioDialog visible={showDialogConvenio} onHide={() => setShowDialogConvenio(false)} onRefresh={fetchData} />
+<ConvenioDialog 
+visible={showDialogConvenio} 
+onHide={() => setShowDialogConvenio(false)} 
+onRefresh={fetchData} 
+/>
+
 <EditarRegistroDialog
   visible={showEditDialog}
   onHide={() => setShowEditDialog(false)}
@@ -843,6 +965,12 @@ const handleDeletePDF = async (rowData: any) => {
   onSave={actualizarRegistroLocal}
 />
 
+<EditarConvenioDialog
+  visible={showEditConvenioDialog}
+  onHide={() => setShowEditConvenioDialog(false)}
+  convenio={selectedConvenioParaEditar}
+  onRefresh={fetchData}
+/>
     </>
   );
 }
