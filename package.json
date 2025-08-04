@@ -6,10 +6,12 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "export": "next export"
   },
   "dependencies": {
-    "chart.js": "^4.4.8",
+    "chart.js": "^4.5.0",
+    "chartjs-plugin-datalabels": "^2.2.0",
     "framer-motion": "^12.4.7",
     "mariadb": "^3.4.0",
     "next": "15.1.7",

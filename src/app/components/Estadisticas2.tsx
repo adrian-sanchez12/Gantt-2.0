@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { Chart } from "primereact/chart";
 import { Accordion, AccordionTab } from "primereact/accordion";
+import { API_BASE } from "@/utils/api";
 
 const fases = [
   { nombre: "Negociación", color: "#3B82F6" }, // Azul
@@ -19,7 +20,7 @@ export default function Estadistica2() {
   useEffect(() => {
     async function fetchData() {
       try {
-        const response = await fetch("/api/convenios"); 
+        const response = await fetch(`${API_BASE}convenios/`); 
         if (!response.ok) throw new Error("Error obteniendo convenios");
 
         const data = await response.json();
@@ -44,31 +45,55 @@ export default function Estadistica2() {
     fetchData();
   }, []);
 
-  // Preparar datos para el PieChart
-  const pieChartData = {
-    labels: Object.keys(conveniosPorFase),
-    datasets: [
-      {
-        data: Object.values(conveniosPorFase).map(convenios => convenios.length),
-        backgroundColor: fases.map(f => f.color),
-      },
-    ],
-  };
+  //sirve para que solo muestre fases con por lo menos 1 convenio
+  const fasesConDatos = Object.entries(conveniosPorFase).filter(
+    ([, convenios]) => convenios.length > 0
+  );
 
-  const chartOptions = {
-    maintainAspectRatio: false, 
-    responsive: true,
-    plugins: {
-      legend: {
-        position: "bottom",
-        labels: {
-          font: {
-            size: 12, 
-          },
-        },
+  // Preparar datos para el PieChart
+const pieChartData = {
+  labels: fasesConDatos.map(([fase]) => fase),
+  datasets: [
+    {
+      data: fasesConDatos.map(([, convenios]) => convenios.length),
+      backgroundColor: fasesConDatos.map(
+        ([fase]) => fases.find(f => f.nombre === fase)?.color || "#D1D5DB"
+      ),
+    },
+  ],
+};
+
+const chartOptions = {
+  maintainAspectRatio: false,
+  responsive: true,
+  layout: {
+      padding: {
+        top: 40,
+        bottom: 30,
+        left: 40,
+        right: 50,
       },
     },
-  };
+  plugins: {
+    legend: {
+      display: false,
+    },
+    datalabels: {
+      color: "#333",
+      formatter: (value: number, context: any) => {
+        const sum = context.chart.data.datasets[0].data.reduce((a: number, b: number) => a + b, 0);
+        const percentage = ((value / sum) * 100).toFixed(1);
+        return `${percentage}%`;
+      },
+      anchor: "end",
+      align: "end",
+      offset: 10,
+      font: {
+        weight: "bold" as const,
+      },
+    },
+  },
+};
 
   return (
     <div className="p-6 bg-white shadow-lg rounded-lg flex">

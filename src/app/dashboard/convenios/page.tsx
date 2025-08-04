@@ -1,4 +1,4 @@
-import ConveniosTable from "../components/ConveniosTable";
+import ConveniosTable from '@/app/components/ConveniosTable';
 import { TabView, TabPanel } from 'primereact/tabview';
         
 
@@ -15,4 +15,3 @@ export default function ConveniosPage() {
     </div>
   );
 }
-

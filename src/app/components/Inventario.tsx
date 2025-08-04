@@ -9,6 +9,7 @@ import { Button } from "primereact/button";
 import { Toast } from "primereact/toast";
 import EditarInventarioDialog from "./EditarInventarioDialog";
 import AgregarInventarioDialog from "./AgregarInventarioDialog";
+import { API_BASE, FILE_BASE } from "@/utils/api";
 
 export default function InventarioTable() {
   const [inventario, setInventario] = useState([]);
@@ -26,7 +27,7 @@ export default function InventarioTable() {
 
   const fetchInventario = async () => {
     try {
-      const response = await fetch("/api/inventario");
+      const response = await fetch(`${API_BASE}inventario/`);
       const data = await response.json();
       setInventario(data || []);
     } catch (error) {
@@ -42,7 +43,7 @@ export default function InventarioTable() {
     formData.append("file", file);
     formData.append("id", rowData.id);
 
-    const response = await fetch("/api/upload", {
+    const response = await fetch(`${API_BASE}upload/`, {
       method: "POST",
       body: formData,
     });
@@ -54,45 +55,41 @@ export default function InventarioTable() {
 
     const { url } = await response.json();
 
-    await fetch("/api/inventario", {
+    await fetch(`${API_BASE}inventario/`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ id: rowData.id, documento_pdf: url }),
     });
 
-    toast.current?.show({ severity: "success", summary: "Éxito", detail: "Archivo subido correctamente", life: 3000 });
+    toast.current?.show({ severity: "success", summary: "Archivo subido", detail: "PDF subido correctamente", life: 3000 });
     fetchInventario();
   };
 
   const handleDeletePDF = async (rowData: any) => {
     try {
-      await fetch("/api/inventario", {
+      await fetch(`${API_BASE}inventario/`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id: rowData.id, documento_pdf: "" }),
       });
 
-      toast.current?.show({ severity: "info", summary: "Documento eliminado", detail: "El PDF ha sido eliminado", life: 3000 });
+      toast.current?.show({ severity: "info", summary: "PDF eliminado", detail: "El documento fue eliminado", life: 3000 });
       fetchInventario();
-    } catch (error) {
-      toast.current?.show({ severity: "error", summary: "Error", detail: "No se pudo eliminar el PDF", life: 3000 });
+    } catch (_error) {
+      toast.current?.show({ severity: "error", summary: "Error", detail: "No se pudo eliminar el documento", life: 3000 });
     }
   };
 
   const handleDeleteInventario = async (id: number) => {
     try {
-      const response = await fetch(`/api/inventario?id=${id}`, { method: "DELETE" });
+      const response = await fetch(`${API_BASE}inventario/?id=${id}`, { method: "DELETE" });
       if (!response.ok) throw new Error("Error al eliminar inventario");
 
       toast.current?.show({ severity: "info", summary: "Eliminado", detail: "Registro eliminado correctamente", life: 3000 });
       fetchInventario();
-    } catch (error) {
+    } catch (_error) {
       toast.current?.show({ severity: "error", summary: "Error", detail: "No se pudo eliminar el registro", life: 3000 });
     }
-  };
-
-  const handleIconClick = (rowData: any) => {
-    fileInputRefs.current[rowData.id]?.click();
   };
 
   const abrirDialogEditar = (rowData: any) => {
@@ -102,67 +99,71 @@ export default function InventarioTable() {
 
   const formatDate = (dateString: string) => {
     if (!dateString) return "";
-    return new Date(dateString).toLocaleDateString("es-ES", {
+    return new Date(dateString).toLocaleDateString("es-CR", {
       day: "2-digit",
       month: "2-digit",
       year: "numeric",
     });
   };
 
-  const rowExpansionTemplate = (rowData: any) => {
-    return (
-      <div className="p-4 text-sm grid grid-cols-2 gap-4 bg-gray-50 rounded-lg border border-gray-200">
+  const rowExpansionTemplate = (rowData: any) => (
+    <div className="p-5 bg-white border border-gray-200 rounded-xl shadow-sm text-sm space-y-5">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 text-gray-800">
         <div>
-          <strong>Objeto del Convenio:</strong>
-          <p className="text-gray-700">{rowData.objeto_convenio}</p>
-        </div>
-        <div>
-          <strong>Fecha Rige:</strong>
-          <p>{formatDate(rowData.fecha_rige)}</p>
+          <p className="text-xs text-gray-500 mb-1">Tipo de Instrumento</p>
+          <p className="font-medium">{rowData.tipo_instrumento}</p>
         </div>
         <div>
-          <strong>Fecha Vencimiento:</strong>
-          <p>{formatDate(rowData.fecha_vencimiento)}</p>
+          <p className="text-xs text-gray-500 mb-1">Presupuesto</p>
+          <p className="font-medium">₡ {Number(rowData.presupuesto).toLocaleString("es-CR", { minimumFractionDigits: 2 })}</p>
         </div>
         <div>
-          <strong>Tipo de Instrumento:</strong>
-          <p>{rowData.tipo_instrumento}</p>
-        </div>
-        <div className="col-span-2">
-          <strong>Instancias Técnicas:</strong>
-          <p className="text-gray-700 whitespace-pre-wrap">{rowData.instancias_tecnicas}</p>
+          <p className="text-xs text-gray-500 mb-1">Fecha de Inicio</p>
+          <p className="font-medium">{formatDate(rowData.fecha_rige)}</p>
         </div>
         <div>
-          <strong>Presupuesto:</strong>
-          <p>₡ {Number(rowData.presupuesto).toLocaleString("es-CR", { minimumFractionDigits: 2 })}</p>
-        </div>
-        <div className="col-span-2">
-          <strong>Informe:</strong>
-          <p className="text-gray-700 whitespace-pre-wrap">{rowData.informe}</p>
+          <p className="text-xs text-gray-500 mb-1">Fecha de Vencimiento</p>
+          <p className="font-medium">{formatDate(rowData.fecha_vencimiento)}</p>
         </div>
       </div>
-    );
-  };
+  
+      <div>
+        <p className="text-xs text-gray-500 mb-1">Objeto del Convenio</p>
+        <p className="text-gray-700 whitespace-pre-wrap">{rowData.objeto_convenio}</p>
+      </div>
+  
+      <div>
+        <p className="text-xs text-gray-500 mb-1">Instancias Técnicas</p>
+        <p className="text-gray-700 whitespace-pre-wrap">{rowData.instancias_tecnicas}</p>
+      </div>
+  
+      <div>
+        <p className="text-xs text-gray-500 mb-1">Informe</p>
+        <p className="text-gray-700 whitespace-pre-wrap">{rowData.informe}</p>
+      </div>
+    </div>
+  );
+  
 
   return (
-    <div className="p-4">
+    <div className="p-6 bg-white rounded-xl border border-gray-200 shadow">
       <Toast ref={toast} />
 
-      <div className="flex justify-between items-center mb-6">
-        <div className="flex items-center gap-2 w-full max-w-md">
-          <i className="pi pi-search text-gray-500" />
-          <InputText
-            value={globalFilter}
-            onChange={(e) => setGlobalFilter(e.target.value)}
-            placeholder="Buscar..."
-            className="p-inputtext-sm w-full border border-gray-400 rounded-md px-3 py-2 bg-white shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-300"
-          />
-        </div>
+      <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-4">
+      <div className="relative w-full md:w-80">
+  <i className="pi pi-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm" />
+  <InputText
+    value={globalFilter}
+    onChange={(e) => setGlobalFilter(e.target.value)}
+    placeholder="Buscar..."
+    className="w-full pl-10 pr-4 py-2 text-sm border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[#CDA95F] transition-all duration-200"
+  />
+</div>
 
         <Button
-          label="Añadir Convenio"
+          label="Añadir"
           icon="pi pi-plus"
-          className="bg-[#172951] hover:bg-[#CDA95F] text-white font-semibold py-2 px-4 rounded-lg shadow-md transition-all duration-300 transform hover:scale-105 text-sm"
+          className="bg-[#172951] hover:bg-[#CDA95F] text-white font-semibold rounded-lg shadow-md px-4 py-2 transition"
           onClick={() => setShowAddDialog(true)}
         />
       </div>
@@ -177,76 +178,72 @@ export default function InventarioTable() {
         rows={10}
         filters={{ global: { value: globalFilter, matchMode: FilterMatchMode.CONTAINS } }}
         globalFilterFields={["cooperante", "contraparte_externa", "nombre_convenio"]}
-        className="text-sm border border-gray-200 rounded-lg shadow-sm"
+        className="text-sm border border-gray-100 rounded-lg"
         responsiveLayout="scroll"
       >
         <Column expander style={{ width: "3rem" }} />
         <Column field="cooperante" header="Cooperante" sortable />
-        <Column field="contraparte_externa" header="Contraparte Externa" sortable />
-        <Column field="nombre_convenio" header="Nombre del Convenio" sortable />
+        <Column field="contraparte_externa" header="Contraparte MEP" sortable />
+        <Column field="nombre_convenio" header="Convenio" sortable />
         <Column
-          field="documento_pdf"
-          header="Documento PDF"
-          body={(rowData) => (
-            <div className="flex items-center gap-2">
-              {rowData.documento_pdf ? (
-                <>
-                  <a
-                    href={rowData.documento_pdf}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-blue-600 underline hover:text-blue-800 transition"
-                  >
-                    📄 {rowData.documento_pdf.split("/").pop()}
-                  </a>
-                  <Button
-                    icon="pi pi-trash"
-                    className="p-button-text text-red-500 hover:text-red-700"
-                    onClick={() => handleDeletePDF(rowData)}
-                    tooltip="Eliminar PDF"
-                  />
-                </>
-              ) : (
-                <>
-                  <Button
-                    icon="pi pi-upload"
-                    className="p-button-text text-[#172951] hover:text-[#CDA95F] transition"
-                    onClick={() => handleIconClick(rowData)}
-                    tooltip="Subir PDF"
-                  />
-                  <input
-                    type="file"
-                    accept="application/pdf"
-                    ref={(el) => {
-                      if (el) {
-                        fileInputRefs.current[rowData.id] = el;
-                      }
-                    }}
-                    onChange={(event) => handleFileUpload(event, rowData)}
-                    style={{ display: "none" }}
-                  />
-                </>
-              )}
-            </div>
-          )}
-        />
+  field="documento_pdf"
+  header="PDF"
+  body={(rowData) => {
+    const fileName = rowData.documento_pdf?.split("/").pop(); // Extrae el nombre del archivo
+
+    return (
+      <div className="flex items-center gap-2">
+        {rowData.documento_pdf ? (
+          <>
+            <a
+              href={`${FILE_BASE}${rowData.documento_pdf}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1 text-blue-600 hover:underline truncate max-w-[150px]"
+              title={fileName}
+            >
+              <i className="pi pi-file-pdf text-red-500" />
+              <span className="truncate">{fileName}</span>
+            </a>
+            <Button
+              icon="pi pi-trash"
+              className="p-button-text text-red-500"
+              onClick={() => handleDeletePDF(rowData)}
+              title="Eliminar PDF"
+            />
+          </>
+        ) : (
+          <>
+            <Button
+              icon="pi pi-upload"
+              className="p-button-text text-[#172951]"
+              onClick={() => fileInputRefs.current[rowData.id]?.click()}
+              title="Subir PDF"
+            />
+            <input
+              type="file"
+              accept="application/pdf"
+              ref={(el) => {
+                if (el) fileInputRefs.current[rowData.id] = el;
+              }}
+              onChange={(event) => handleFileUpload(event, rowData)}
+              style={{ display: "none" }}
+            />
+          </>
+        )}
+      </div>
+    );
+  }}
+/>
         <Column
           header="Acciones"
           body={(rowData) => (
-            <div className="flex gap-2">
-              <Button
-                icon="pi pi-pencil"
-                className="p-button-rounded p-button-warning p-button-sm"
-                onClick={() => abrirDialogEditar(rowData)}
-              />
-              <Button
-                icon="pi pi-times"
-                className="p-button-rounded p-button-danger p-button-sm"
-                onClick={() => handleDeleteInventario(rowData.id)}
-              />
+            <div className="flex gap-1 justify-center">
+              <Button icon="pi pi-pencil" className="p-button-rounded p-button-sm p-button-text text-yellow-600" onClick={() => abrirDialogEditar(rowData)} />
+              <Button icon="pi pi-trash" className="p-button-rounded p-button-sm p-button-text text-red-500" onClick={() => handleDeleteInventario(rowData.id)} />
             </div>
           )}
-          style={{ textAlign: "center", width: "110px" }}
+          style={{ width: "100px" }}
         />
       </DataTable>
 
